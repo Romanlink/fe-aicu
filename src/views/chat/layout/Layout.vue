@@ -72,7 +72,6 @@ const setCollapsed = (val: boolean) => {
             @collapse="setCollapsed">
             <div class="menu-wrapper">
               <Menu />
-              <!-- 3333333 -->
             </div>
           </a-layout-sider>
           <a-layout-content>
@@ -90,7 +89,7 @@ const setCollapsed = (val: boolean) => {
               <Permission :visible="needPermission" />
             </div>
           </a-layout-content>
-          <Footer />
+          <!-- <Footer /> -->
         </a-layout>
       </a-layout>
     </a-layout>

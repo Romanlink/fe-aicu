@@ -8,6 +8,8 @@ import '@/assets/style/global.less';
 import ArcoVue from '@arco-design/web-vue';
 import ArcoVueIcon from '@arco-design/web-vue/es/icon';
 import '@arco-design/web-vue/dist/arco.css';
+import globalComponents from './components';
+
 
 async function bootstrap() {
   const app = createApp(App)
@@ -21,6 +23,7 @@ async function bootstrap() {
 
   app.use(ArcoVue, {});
   app.use(ArcoVueIcon);
+  app.use(globalComponents);
 
   await setupRouter(app)
 

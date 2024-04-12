@@ -4,6 +4,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import { setupPageGuard } from './permission'
 import { ChatLayout } from '@/views/chat/layout'
 import TIP_LAYOUT from '../layout/tip-layout.vue'
+import DEFAULT_LAYOUT from '../layout/default-layout.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -31,10 +32,9 @@ const routes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/',
+    path: '/chat',
     name: 'Root',
     component: ChatLayout,
-    redirect: '/chat',
     children: [
       {
         path: '/chat/:uuid?',
@@ -42,6 +42,31 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/chat/index.vue'),
       },
     ],
+  },
+
+  {
+    path: '/',
+    name: 'Home',
+    component: DEFAULT_LAYOUT,
+    redirect: '/chat',
+    children: [
+      {
+        path: '/user',
+        name: 'User',
+        component: () => import('@/views/user/setting/index.vue'),
+      },
+      {
+        path: '/forcast',
+        name: 'Forcast',
+        component: () => import('@/views/forcast/index.vue'),
+      },
+      {
+        path: '/company',
+        name: 'Company',
+        component: () => import('@/views/company/index.vue'),
+      },
+    ],
+
   },
 
   {

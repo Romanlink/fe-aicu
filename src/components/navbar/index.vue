@@ -55,7 +55,7 @@
           <template #content>
             <template v-if="!isHideMenu">
               <a-doption>
-                <a-space @click="$router.push({ name: 'user' })">
+                <a-space @click="$router.push('/user')">
                   <icon-user />
                   <span>
                     个人中心
@@ -63,7 +63,7 @@
                 </a-space>
               </a-doption>
               <a-doption>
-                <a-space @click="$router.push({ name: 'company' })">
+                <a-space @click="$router.push('/company')">
                   <icon-settings />
                   <span>
                     公司管理
