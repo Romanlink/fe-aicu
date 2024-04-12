@@ -16,12 +16,12 @@
         <template #label="{ label }">{{ label }} :</template>
         <template #value="{ value, data }">
           <span>{{ value }}</span>
-          <a-button v-if="data.label === '昵称'" type="text" class="ml-10" @click="handleEdit">修改</a-button>
+          <a-button v-if="data.label === '公司名称'" type="text" class="ml-10" @click="handleEdit">修改</a-button>
         </template>
       </a-descriptions>
     </a-space>
 
-    <UserInfo ref="userInfoRef" />
+    <CompanyInfo ref="companyInfoRef" />
   </a-card>
 </template>
 
@@ -31,15 +31,10 @@ import type {
   FileItem,
   RequestOption,
 } from '@arco-design/web-vue/es/upload/interfaces';
-import { useUserStore } from '@/store';
-// import { userUploadApi } from '@/api/user-center';
 import type { DescData } from '@arco-design/web-vue/es/descriptions/interface';
-import UserInfo from './user-info.vue'
+import CompanyInfo from './company-info.vue'
 
-
-const userStore = useUserStore();
-
-const userInfoRef = ref(null)
+const companyInfoRef = ref(null)
 
 const file = {
   uid: '-2',
@@ -47,29 +42,19 @@ const file = {
   // url: userStore.avatar,
   url: '',
 };
+
+// data
 const renderData = [
   {
-    label: '手机号码',
-    value: '18011112222',
-  },
-  {
-    label: '昵称',
-    value: 'admin',
-  },
-  {
-    label: '账号ID',
-    value: '892453454',
-  },
-  {
-    label: '注册时间',
-    value: '2023-10-10',
-  },
+    label: '公司名称',
+    value: '北京XXXX科技有限公司',
+  }
 ] as DescData[];
 
 // 修改昵称
 const handleEdit = () => {
-  if (userInfoRef?.value) {
-    userInfoRef.value.handleShow()
+  if (companyInfoRef?.value) {
+    companyInfoRef.value.handleShow()
   }
 }
 
