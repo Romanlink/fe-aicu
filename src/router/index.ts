@@ -35,6 +35,9 @@ const routes: RouteRecordRaw[] = [
     path: '/chat',
     name: 'Root',
     component: ChatLayout,
+    meta: {
+      requiresAuth: true,
+    },
     children: [
       {
         path: '/chat/:uuid?',
@@ -49,6 +52,9 @@ const routes: RouteRecordRaw[] = [
     name: 'Home',
     component: DEFAULT_LAYOUT,
     redirect: '/chat',
+    meta: {
+      requiresAuth: true,
+    },
     children: [
       {
         path: '/user',
@@ -71,7 +77,7 @@ const routes: RouteRecordRaw[] = [
 
   {
     path: '/tip',
-    name: 'tip',
+    name: 'Tip',
     component: TIP_LAYOUT,
     meta: {
       requiresAuth: true,

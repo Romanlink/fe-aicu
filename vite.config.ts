@@ -22,8 +22,10 @@ function setupPlugins(env: ImportMetaEnv): PluginOption[] {
   ]
 }
 
+
 export default defineConfig((env) => {
   const viteEnv = loadEnv(env.mode, process.cwd()) as unknown as ImportMetaEnv
+  console.log(viteEnv.VITE_APP_API_BASE_URL)
 
   return {
     resolve: {
@@ -40,7 +42,7 @@ export default defineConfig((env) => {
         '/api': {
           target: viteEnv.VITE_APP_API_BASE_URL,
           changeOrigin: true, // 允许跨域
-          rewrite: path => path.replace('/api/', '/'),
+          // rewrite: (path) => path.replace(/^\/api/, '/api') // 重写路径把路径变成空字符
         },
       },
     },

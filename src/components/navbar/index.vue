@@ -109,6 +109,8 @@ defineProps({
 });
 
 const handleLogout = () => {
+  localStorage.AuthToken = ''
+  localStorage.userInfo = ''
   router.push('/login')
 };
 </script>
