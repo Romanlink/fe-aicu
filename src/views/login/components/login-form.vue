@@ -72,7 +72,7 @@ const loginConfig = useStorage('login-config', {
 
 const userInfo = reactive({
   loginPhone: loginConfig.value.loginPhone || '',
-  password:  loginConfig.value.password || "",
+  password: loginConfig.value.password || "",
 });
 
 // phone validate
@@ -117,6 +117,12 @@ const handleSubmit = async ({
           // const { redirect } = router.currentRoute.value;
           console.log(router.currentRoute.value)
           // router.push(redirect || '/')
+
+          if (!res.orgId) {
+            router.push('/tip/info')
+          } else {
+            router.push('/')
+          }
 
         } else {
           Message.error('登录错误')

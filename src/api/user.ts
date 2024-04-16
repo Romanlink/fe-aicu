@@ -26,3 +26,12 @@ export function accountLogin(params: any) {
 export function resetPassword(params: any) {
     return post('/public/account/rest-password', params)
 } 
+
+/**
+ * 补充公司信息
+ * @param params 
+ * @returns hhh
+ */
+export function addCompany(params: any) {
+    return post('/account/add-company', params)
+} 

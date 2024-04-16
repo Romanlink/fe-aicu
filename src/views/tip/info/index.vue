@@ -3,11 +3,13 @@
     <div class="wrapper">
       <div class="title">欢迎使用 AI PRO</div>
       <div class="desc">补充一下您的公司名称或者等待管理员将您加入再进入首页吧～</div>
-      <a-input :style="{ width: '320px' }" placeholder="请输入公司名称" size="large" class="company-input" allow-clear  />
+      <a-input :style="{ width: '320px' }" :max-length="50" v-model="orgName" placeholder="请输入公司名称" size="large"
+        class="company-input" allow-clear />
       <template v-if="isShowAlert">
-        <a-alert  type="error" class="alert">公司名称不能为空/您的公司名称已被注册，请联系该公司管理员18600000000加入</a-alert>
+        <a-alert type="error" class="alert">{{ alertMsg }}</a-alert>
       </template>
-      <a-button type="primary" :style="{ width: '160px' }" size="large" class="submit-btn" @click="handleSubmit">
+      <a-button type="primary" :style="{ width: '160px' }" size="large" :loading="loading" class="submit-btn"
+        @click="handleSubmit">
         进入首页
       </a-button>
     </div>
@@ -16,12 +18,44 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router';
 
-const isShowAlert = ref<boolean>(false)
+import { addCompany } from '@/api/user'
+import { Message } from '@arco-design/web-vue';
+import useLoading from '@/hooks/loading';
+const router = useRouter();
+
+const isShowAlert = ref<boolean>(false) // 提示框是否显示
+const alertMsg = ref('') // 提示信息
+const orgName = ref('') // 企业名称
+
+const { loading, setLoading } = useLoading();
 
 // 提交
 const handleSubmit = () => {
-  isShowAlert.value = !isShowAlert.value
+  console.log(orgName.value)
+  if (!orgName.value) {
+    Message.warning('公司名称不能为空')
+    return
+  }
+
+  setLoading(true)
+  addCompany({
+    orgName: orgName.value
+  }).then((res: any) => {
+    console.log(res)
+    if (!res) return
+    if (res.orgName) {
+      Message.success('操作成功')
+      router.push('/')
+    } else {
+      isShowAlert.value = !isShowAlert.value
+      alertMsg.value = '这里是错误信息，由接口返回'
+    }
+  }).finally(() => {
+    setLoading(false)
+  })
+  // isShowAlert.value = !isShowAlert.value
 }
 </script>
 

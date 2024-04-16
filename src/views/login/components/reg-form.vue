@@ -192,7 +192,11 @@ const handleSubmit = async ({
           Message.success('注册成功')
           setStorage('AuthToken', res.token, 60 * 1000)
           setStorage('userInfo', JSON.stringify(res))
-          router.push('/')
+          if (!res.orgId) {
+            router.push('/tip/info')
+          } else {
+            router.push('/')
+          }
         } else {
           Message.error('注册错误')
         }
