@@ -117,12 +117,8 @@ async function onConversation() {
           // if(!xhr.responseText) return
 
           console.log('-----------------')
-          console.log(xhr.responseText)
+          // console.log(xhr.responseText)
           // console.log(typeof(xhr.responseText))
-
-          if (!xhr.responseText) {
-            console.log(33333333333333)
-          }
 
           // let responseText1 = JSON.parse(xhr.responseText)
 
@@ -133,11 +129,11 @@ async function onConversation() {
           // console.log(responseText)
           // Always process the final line
           const lastIndex = responseText.lastIndexOf('\n', responseText.length - 2)
-          // console.log(lastIndex)
+          console.log(lastIndex)
           let chunk = responseText
           if (lastIndex !== -1)
             chunk = responseText.substring(lastIndex)
-          // console.log(chunk)
+          console.log(chunk)
           try {
             const data = JSON.parse(chunk)
             updateChat(
