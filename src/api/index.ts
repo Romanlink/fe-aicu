@@ -25,7 +25,8 @@ export function fetchChatAPIProcess<T = any>(
     prompt: string
     options?: { conversationId?: string; parentMessageId?: string }
     signal?: GenericAbortSignal
-    onDownloadProgress?: (progressEvent: AxiosProgressEvent) => void },
+    onDownloadProgress?: (progressEvent: AxiosProgressEvent) => void
+  },
 ) {
   const settingStore = useSettingStore()
   const authStore = useAuthStore()
@@ -44,12 +45,28 @@ export function fetchChatAPIProcess<T = any>(
     }
   }
 
+  console.log(111111)
+  console.log(data)
+  console.log(params)
+
+  const postData = {
+    question: data.prompt,
+    // stream: true
+  }
+
   return post<T>({
-    url: '/chat-process',
-    data,
+    url: '/chat/ask',
+    data: postData,
     signal: params.signal,
     onDownloadProgress: params.onDownloadProgress,
   })
+
+  // return post<T>({
+  //   url: '/chat-process',
+  //   data,
+  //   signal: params.signal,
+  //   onDownloadProgress: params.onDownloadProgress,
+  // })
 }
 
 export function fetchSession<T>() {

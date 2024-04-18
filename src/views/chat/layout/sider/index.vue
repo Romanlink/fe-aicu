@@ -96,7 +96,7 @@ watch(
         <div class="flex-1 min-h-0 pb-4 overflow-hidden">
           <List />
         </div>
-        <div class="flex items-center p-4 space-x-4">
+        <!-- <div class="flex items-center p-4 space-x-4">
           <div class="flex-1">
             <NButton block @click="show = true">
               {{ $t('store.siderButton') }}
@@ -105,9 +105,9 @@ watch(
           <NButton @click="handleClearAll">
             <SvgIcon icon="ri:close-circle-line" />
           </NButton>
-        </div>
+        </div> -->
       </main>
-      <Footer />
+      <!-- <Footer /> -->
     </div>
   </NLayoutSider>
   <template v-if="isMobile">

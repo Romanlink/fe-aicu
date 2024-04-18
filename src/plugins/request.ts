@@ -9,13 +9,12 @@ const myAxios = axios.create({
     headers: {
         AuthToken: getStorage('AuthToken') || '',
         'Content-Type': 'application/json',
-        'Accept': '*/*', 
+        'Accept': '*/*',
     }
 })
 
 // console.log(process.env.NODE_ENV)
 console.log(axios.defaults.baseURL)
-
 
 // post请求头
 // axios.defaults.headers['Content-Type'] = 'application/json'
@@ -57,6 +56,8 @@ myAxios.interceptors.response.use(
             } else {
                 return Promise.resolve(response.data)
             }
+        } else if (response.data.code == 'MUC100001' && response.data.message.indexOf('当前公司已注册') > -1) {
+            return Promise.resolve(response.data)
         } else if (response.data.code == 401) {
             Message.error(response.data.message)
             return Promise.reject(response.data)
@@ -66,7 +67,10 @@ myAxios.interceptors.response.use(
         }
     },
     (error) => {
-        if (error.response) {
+        console.log(error.response)
+        if (error.response && error.response.data.code == 'MUC100001' && error.response.data.message.indexOf('当前公司已注册') > -1) {
+            return Promise.resolve(error.response.data)
+        } else if (error.response) {
             Message.error(error.response.data.message || error.response.statusText)
         } else {
             Message.error('网络出错了，未请求到数据');

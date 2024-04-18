@@ -48,9 +48,9 @@ const handleSubmit = () => {
     if (res.orgName) {
       Message.success('操作成功')
       router.push('/')
-    } else {
+    } else if (res.message && !res.success) {
       isShowAlert.value = !isShowAlert.value
-      alertMsg.value = '这里是错误信息，由接口返回'
+      alertMsg.value = res.message
     }
   }).finally(() => {
     setLoading(false)

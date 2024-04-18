@@ -45,6 +45,13 @@ export default defineConfig((env) => {
           // rewrite: (path) => path.replace(/^\/api/, '/api') // 重写路径把路径变成空字符
         },
       },
+      // proxy: {
+      //   '/api': {
+      //     target: viteEnv.VITE_APP_API_BASE_URL,
+      //     changeOrigin: true, // 允许跨域
+      //     rewrite: path => path.replace('/api/', '/'),
+      //   },
+      // },
     },
     build: {
       reportCompressedSize: false,

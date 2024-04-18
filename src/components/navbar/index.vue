@@ -48,7 +48,7 @@
             <a-avatar :size="32" :style="{ marginRight: '8px', cursor: 'pointer' }">
               <img alt="avatar" :src="avatarImg" />
             </a-avatar>
-            <div class="info">180****2222</div>
+            <div class="info">{{ userInfo && userInfo.loginPhone ? encryptPhoneNumber(userInfo.loginPhone) : '' }}</div>
             <icon-caret-down />
           </div>
 
@@ -88,16 +88,31 @@
 
 <script lang="ts" setup>
 import { PropType } from 'vue';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 // import { Message } from '@arco-design/web-vue';
 import { useRouter } from 'vue-router';
 import { useFullscreen } from '@vueuse/core';
 import avatarUrl from '@/assets/images/login-banner.png'
+import { getStorage, setStorage } from '@/utils/arco-storage'
 
 const avatarImg = ref(avatarUrl)
 const { isFullscreen, toggle: toggleFullScreen } = useFullscreen();
 
 const router = useRouter();
+
+const userInfo = ref<any>('')
+
+// 加密手机号
+const encryptPhoneNumber = (phoneNumber: string) => {
+  return phoneNumber.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+}
+
+onMounted(() => {
+  const user = getStorage('userInfo')
+  if (user) {
+    userInfo.value = JSON.parse(user)
+  }
+})
 
 defineProps({
   isHideMenu: {

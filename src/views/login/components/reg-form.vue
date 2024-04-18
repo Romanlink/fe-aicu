@@ -65,7 +65,7 @@ import useLoading from '@/hooks/loading';
 // import type { LoginData } from '@/api/user';
 import { isMobile } from '@/utils/index'
 import { sendSmsCode } from '@/api/common';
-import { accountRegister } from '@/api/user'
+import { accountRegister, accountInfo } from '@/api/user'
 import { setStorage } from '@/utils/arco-storage'
 import CryptoJS from 'crypto-js'
 
@@ -73,12 +73,6 @@ const router = useRouter();
 const errorMessage = ref('');
 const { loading, setLoading } = useLoading();
 const userStore = useUserStore();
-
-// const rules = reactive({
-//   loginPhone: 
-// })
-
-
 
 // 是否统一用户协议
 const isAgree = ref(true)
@@ -182,27 +176,56 @@ const handleSubmit = async ({
     setLoading(true);
     try {
       const md5Hash = CryptoJS.MD5(values.password).toString()
-      accountRegister({
+
+      // 注册
+      const res: any = await accountRegister({
         loginPhone: values.loginPhone,
         loginCode: values.loginCode,
-        password: md5Hash
-      }).then((res: any) => {
-        if (!res) return
-        if (res && res.token) {
-          Message.success('注册成功')
-          setStorage('AuthToken', res.token, 60 * 1000)
-          setStorage('userInfo', JSON.stringify(res))
-          if (!res.orgId) {
-            router.push('/tip/info')
-          } else {
-            router.push('/')
-          }
-        } else {
-          Message.error('注册错误')
-        }
-      }).finally(() => {
-        setLoading(false);
+        // password: md5Hash
+        password: values.password
       })
+
+      if (!res) return setLoading(false)
+      if (!res.token) return Message.error('注册错误')
+
+      // 存token
+      setStorage('AuthToken', res.token, 60 * 1000)
+
+      setStorage('userInfo', JSON.stringify(res))
+
+      Message.success('注册成功')
+      setLoading(false)
+
+      if (!res.orgId) {
+        // 未关联企业
+        router.push('/tip/add-company')
+      } else {
+        router.push('/')
+      }
+
+      // 获取用户信息
+      // const userInfo: any = await accountInfo({})
+
+      // if (userInfo) {
+      //   setStorage('userInfo', JSON.stringify(userInfo))
+
+      //   Message.success('注册成功')
+      //   setLoading(false)
+
+      //   if (!userInfo.orgId) {
+      //     // 未关联企业
+      //     router.push('/tip/info')
+      //   } else if (userInfo.trial === 0) {
+      //     // 已过试用期
+      //     router.push('/tip/info')
+      //   } else {
+      //     router.push('/')
+      //   }
+      // } else {
+      //   setLoading(false)
+      // }
+
+
     } catch (err) {
       errorMessage.value = (err as Error).message;
     } finally {

@@ -13,10 +13,10 @@
           </template>
         </a-input>
       </a-form-item>
-      <a-form-item field="password" :min-length="6" :max-length="18"
+      <a-form-item field="password"
         :rules="[{ required: true, message: '密码不能为空' }, { minLength: 6, message: '6-18位密码' }, { maxLength: 18, message: '6-18位密码' }]"
         :validate-trigger="['change', 'blur']" hide-label>
-        <a-input-password v-model="userInfo.password" placeholder="请输入密码" allow-clear>
+        <a-input-password :min-length="6" :max-length="18" v-model="userInfo.password" placeholder="请输入密码" allow-clear>
           <template #prefix>
             <icon-lock />
           </template>
@@ -53,7 +53,7 @@ import { useStorage } from '@vueuse/core';
 import { useUserStore } from '@/store';
 import useLoading from '@/hooks/loading';
 // import type { LoginData } from '@/api/user';
-import { accountLogin } from '@/api/user'
+import { accountLogin, accountInfo } from '@/api/user'
 import { isMobile } from '@/utils/index'
 import { setStorage } from '@/utils/arco-storage'
 import CryptoJS from 'crypto-js'
@@ -104,46 +104,46 @@ const handleSubmit = async ({
     try {
       const md5Hash = CryptoJS.MD5(values.password).toString()
       console.log(router.currentRoute.value)
-      accountLogin({
+
+      // 登录
+      const loginRes: any = await accountLogin({
         loginPhone: values.loginPhone,
         password: md5Hash
-      }).then((res: any) => {
-        console.log(res)
-        if (!res) return
-        if (res && res.token) {
-          Message.success('登录成功')
-          setStorage('AuthToken', res.token, 60 * 1000)
-          setStorage('userInfo', JSON.stringify(res))
-          // const { redirect } = router.currentRoute.value;
-          console.log(router.currentRoute.value)
-          // router.push(redirect || '/')
-
-          if (!res.orgId) {
-            router.push('/tip/info')
-          } else {
-            router.push('/')
-          }
-
-        } else {
-          Message.error('登录错误')
-        }
-      }).finally(() => {
-        const { rememberPassword } = loginConfig.value;
-        const { loginPhone, password } = values;
-        // 实际生产环境需要进行加密存储。
-        // The actual production environment requires encrypted storage.
-        loginConfig.value.loginPhone = rememberPassword ? loginPhone : '';
-        loginConfig.value.password = rememberPassword ? password : '';
-        setLoading(false);
       })
-      // await userStore.login(values as LoginData);
-      // const { redirect, ...othersQuery } = router.currentRoute.value.query;
-      // router.push({
-      //   name: (redirect as string) || 'ChatIndex',
-      //   query: {
-      //     ...othersQuery,
-      //   },
-      // });
+
+      if (!loginRes) return setLoading(false)
+      if (!loginRes.token) return Message.error('登录错误')
+
+      // 存token
+      setStorage('AuthToken', loginRes.token, 60 * 1000)
+
+      // 记住密码
+      const { rememberPassword } = loginConfig.value;
+      const { loginPhone, password } = values;
+      loginConfig.value.loginPhone = rememberPassword ? loginPhone : '';
+      loginConfig.value.password = rememberPassword ? password : '';
+
+      // 获取用户信息
+      const userInfo: any = await accountInfo({})
+
+      if (userInfo) {
+        setStorage('userInfo', JSON.stringify(userInfo))
+
+        Message.success('登录成功')
+        setLoading(false)
+
+        if (!userInfo.orgId) {
+          // 未关联企业
+          router.push('/tip/add-company')
+        } else if (userInfo.trial == 0) {
+          // 已过试用期
+          router.push('/tip/expired')
+        } else {
+          router.push('/')
+        }
+      }else{
+        setLoading(false)
+      }
 
     } catch (err) {
       errorMessage.value = (err as Error).message;

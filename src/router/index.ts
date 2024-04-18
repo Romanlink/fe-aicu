@@ -84,7 +84,7 @@ const routes: RouteRecordRaw[] = [
     },
     children: [
       {
-        path: 'info',
+        path: 'add-company',
         name: 'TipInfo',
         component: () => import('@/views/tip/info/index.vue'),
         meta: {
