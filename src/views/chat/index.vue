@@ -114,34 +114,35 @@ async function onConversation() {
         onDownloadProgress: ({ event }) => {
           const xhr = event.target
 
-          // if(!xhr.responseText) return
-
-          console.log('-----------------')
-          // console.log(xhr.responseText)
-          // console.log(typeof(xhr.responseText))
-
-          // let responseText1 = JSON.parse(xhr.responseText)
-
-          // const responseText = JSON.stringify(responseText1.data)
-
           const { responseText } = xhr
 
-          // console.log(responseText)
+          let responseArr = responseText.split('\n')
+          responseArr = responseArr.filter((item: any) => { return item })
+
+          let resText = ''
+          responseArr.forEach((item: any) => {
+            if (item) {
+              const itemData = JSON.parse(item.substring(5))
+              resText += itemData.content || ''
+            }
+          })
+
           // Always process the final line
           const lastIndex = responseText.lastIndexOf('\n', responseText.length - 2)
-          console.log(lastIndex)
           let chunk = responseText
           if (lastIndex !== -1)
             chunk = responseText.substring(lastIndex)
-          console.log(chunk)
           try {
-            const data = JSON.parse(chunk)
+            // const data = JSON.parse(chunk)
+            const data = responseArr[responseArr.length - 1]
+            
             updateChat(
               +uuid,
               dataSources.value.length - 1,
               {
                 dateTime: new Date().toLocaleString(),
-                text: lastText + (data.text ?? ''),
+                // text: lastText + (data.text ?? ''),
+                text: resText,
                 inversion: false,
                 error: false,
                 loading: true,
@@ -260,19 +261,33 @@ async function onRegenerate(index: number) {
         onDownloadProgress: ({ event }) => {
           const xhr = event.target
           const { responseText } = xhr
+
+          let responseArr = responseText.split('\n')
+          responseArr = responseArr.filter((item: any) => { return item })
+          
+          let resText = ''
+          responseArr.forEach((item: any) => {
+            if (item) {
+              const itemData = JSON.parse(item.substring(5))
+              resText += itemData.content || ''
+            }
+          })
+
           // Always process the final line
           const lastIndex = responseText.lastIndexOf('\n', responseText.length - 2)
           let chunk = responseText
           if (lastIndex !== -1)
             chunk = responseText.substring(lastIndex)
           try {
-            const data = JSON.parse(chunk)
+            // const data = JSON.parse(chunk)
+            const data = responseArr[responseArr.length - 1]
             updateChat(
               +uuid,
               index,
               {
                 dateTime: new Date().toLocaleString(),
-                text: lastText + (data.text ?? ''),
+                // text: lastText + (data.text ?? ''),
+                text: resText,
                 inversion: false,
                 error: false,
                 loading: true,

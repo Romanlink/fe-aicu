@@ -45,10 +45,6 @@ export function fetchChatAPIProcess<T = any>(
     }
   }
 
-  console.log(111111)
-  console.log(data)
-  console.log(params)
-
   const postData = {
     question: data.prompt,
     // stream: true
