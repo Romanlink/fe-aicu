@@ -46,9 +46,16 @@
         <a-dropdown trigger="click">
           <div class="user-info">
             <a-avatar :size="32" :style="{ marginRight: '8px', cursor: 'pointer' }">
-              <img alt="avatar" :src="avatarImg" />
+              <img alt="avatar" :src="userInfo.headPicUrl || defaultAvatar" />
             </a-avatar>
-            <div class="info">{{ userInfo && userInfo.loginPhone ? encryptPhoneNumber(userInfo.loginPhone) : '' }}</div>
+            <div class="info">
+              <template v-if="userInfo.nickName === userInfo.loginPhone">
+                {{ encryptPhoneNumber(userInfo.loginPhone) }}
+              </template>
+              <template v-else>
+                {{ userInfo.nickName || encryptPhoneNumber(userInfo.loginPhone) }}
+              </template>
+            </div>
             <icon-caret-down />
           </div>
 
@@ -88,19 +95,20 @@
 
 <script lang="ts" setup>
 import { PropType } from 'vue';
-import { ref, onMounted } from 'vue';
+import { onMounted, computed } from 'vue';
 // import { Message } from '@arco-design/web-vue';
 import { useRouter } from 'vue-router';
 import { useFullscreen } from '@vueuse/core';
-import avatarUrl from '@/assets/images/login-banner.png'
-import { getStorage, setStorage } from '@/utils/arco-storage'
+import defaultAvatar from '@/assets/avatar.jpg'
+import { useUserStore } from '@/store';
 
-const avatarImg = ref(avatarUrl)
+const userStore = useUserStore();
+const userInfo = computed(() => userStore.userInfo)
+
 const { isFullscreen, toggle: toggleFullScreen } = useFullscreen();
 
 const router = useRouter();
 
-const userInfo = ref<any>('')
 
 // 加密手机号
 const encryptPhoneNumber = (phoneNumber: string) => {
@@ -108,10 +116,6 @@ const encryptPhoneNumber = (phoneNumber: string) => {
 }
 
 onMounted(() => {
-  const user = getStorage('userInfo')
-  if (user) {
-    userInfo.value = JSON.parse(user)
-  }
 })
 
 defineProps({

@@ -1,17 +1,19 @@
 <template>
   <a-card :bordered="false">
     <a-space :size="54">
-      <a-upload :custom-request="customRequest" list-type="picture-card" :file-list="fileList"
-        :show-upload-button="true" :show-file-list="false" @change="uploadChange">
-        <template #upload-button>
-          <a-avatar :size="100" class="info-avatar">
-            <template #trigger-icon>
-              <icon-camera />
-            </template>
-            <img v-if="fileList.length" :src="fileList[0].url" />
-          </a-avatar>
-        </template>
-      </a-upload>
+      <a-spin :loading="loading">
+        <a-upload :custom-request="handleUpload" accept="image/png, image/jpeg" list-type="picture-card"
+          :file-list="fileList" :show-upload-button="true" :show-file-list="false">
+          <template #upload-button>
+            <a-avatar :size="100" class="info-avatar">
+              <template #trigger-icon>
+                <icon-camera />
+              </template>
+              <img v-if="fileList.length" :src="fileList[0].url" />
+            </a-avatar>
+          </template>
+        </a-upload>
+      </a-spin>
       <a-descriptions :data="renderData" :column="1" size="medium">
         <template #label="{ label }">{{ label }} :</template>
         <template #value="{ value, data }">
@@ -26,83 +28,92 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import type {
   FileItem,
   RequestOption,
 } from '@arco-design/web-vue/es/upload/interfaces';
 import type { DescData } from '@arco-design/web-vue/es/descriptions/interface';
+import { useUserStore } from '@/store';
+import { imageUploadApi, imageViewApi } from '@/api/common'
+import defaultAvatar from '@/assets/avatar.jpg'
+import { Message } from '@arco-design/web-vue';
+import useLoading from '@/hooks/loading';
 import CompanyInfo from './company-info.vue'
 
 const companyInfoRef = ref(null)
+const userStore = useUserStore();
 
-const file = {
-  uid: '-2',
-  name: 'avatar.png',
-  // url: userStore.avatar,
-  url: '',
-};
+const userInfo = computed(() => userStore.userInfo)
+const { loading, setLoading } = useLoading();
 
 // data
-const renderData = [
+const renderData = computed(() => [
   {
     label: '公司名称',
-    value: '北京XXXX科技有限公司',
+    value: userInfo.value.orgName,
   }
-] as DescData[];
+] as DescData[])
 
 // 修改昵称
 const handleEdit = () => {
   if (companyInfoRef?.value) {
-    companyInfoRef.value.handleShow()
+    companyInfoRef.value.handleShow(userInfo.value.orgName)
   }
 }
 
-const fileList = ref<FileItem[]>([file]);
-const uploadChange = (fileItemList: FileItem[], fileItem: FileItem) => {
-  fileList.value = [fileItem];
+// 头像
+const file = {
+  uid: '-2',
+  name: 'avatar.png',
+  url: userInfo.value.headPicUrl || defaultAvatar,
 };
-const customRequest = (options: RequestOption) => {
-  // docs: https://axios-http.com/docs/cancellation
-  const controller = new AbortController();
+const fileList = ref<FileItem[]>([file]);
 
-  (async function requestWrap() {
-    const {
-      onProgress,
-      onError,
-      onSuccess,
-      fileItem,
-      name = 'file',
-    } = options;
-    onProgress(20);
-    const formData = new FormData();
-    formData.append(name as string, fileItem.file as Blob);
-    const onUploadProgress = (event: ProgressEvent) => {
-      let percent;
-      if (event.total > 0) {
-        percent = (event.loaded / event.total) * 100;
-      }
-      onProgress(parseInt(String(percent), 10), event);
-    };
+// 上传头像
+const handleUpload = async (options: RequestOption) => {
 
-    try {
-      // https://github.com/axios/axios/issues/1630
-      // https://github.com/nuysoft/Mock/issues/127
+  if (loading.value) return
 
-      // const res = await userUploadApi(formData, {
-      //   controller,
-      //   onUploadProgress,
-      // });
-      // onSuccess(res);
-    } catch (error) {
-      onError(error);
-    }
-  })();
-  return {
-    abort() {
-      controller.abort();
-    },
-  };
+  setLoading(true)
+
+  const {
+    fileItem,
+    name = 'file',
+  } = options;
+  const formData = new FormData();
+
+  formData.append(name as string, fileItem.file as Blob);
+
+  // 上传头像
+  const imageKey: any = await imageUploadApi(formData);
+  if (!imageKey) {
+    setLoading(false)
+    return
+  }
+
+  // 更新头像
+  // const user = await modifyPass({ headPic: imageKey })
+  // if (!user) {
+  //   setLoading(false)
+  //   return
+  // }
+
+  // 下载头像
+  const imageData: any = await imageViewApi({ imageKey })
+
+  if (imageData && imageData.image) {
+    const headPicUrl = 'data:image/jpeg;base64,' + imageData.image
+    userStore.updateUserInfo({
+      headPic: imageKey,
+      headPicUrl
+    })
+    fileList.value = [fileItem];
+    Message.success('修改成功')
+  }
+
+  setLoading(false)
+
 };
 </script>
 

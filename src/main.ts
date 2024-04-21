@@ -10,7 +10,6 @@ import ArcoVueIcon from '@arco-design/web-vue/es/icon';
 import '@arco-design/web-vue/dist/arco.css';
 import globalComponents from './components';
 
-
 async function bootstrap() {
   const app = createApp(App)
   setupAssets()

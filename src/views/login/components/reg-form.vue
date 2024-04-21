@@ -65,7 +65,8 @@ import useLoading from '@/hooks/loading';
 // import type { LoginData } from '@/api/user';
 import { isMobile } from '@/utils/index'
 import { sendSmsCode } from '@/api/common';
-import { accountRegister, accountInfo } from '@/api/user'
+import { accountRegister } from '@/api/user'
+import { imageViewApi } from '@/api/common'
 import { setStorage } from '@/utils/arco-storage'
 import CryptoJS from 'crypto-js'
 
@@ -192,6 +193,25 @@ const handleSubmit = async ({
       setStorage('AuthToken', res.token, 60 * 1000)
 
       setStorage('userInfo', JSON.stringify(res))
+      userStore.updateUserInfo(res)
+
+      const { headPic } = res
+
+      // 下载头像
+      if (headPic) {
+        const imageData: any = await imageViewApi({ imageKey: headPic })
+
+        if (imageData && imageData.image) {
+          const headPicUrl = 'data:image/jpeg;base64,' + imageData.image
+          userStore.updateUserInfo({
+            headPicUrl
+          })
+        }
+      } else {
+        userStore.updateUserInfo({
+          headPicUrl: ''
+        })
+      }
 
       Message.success('注册成功')
       setLoading(false)

@@ -16,6 +16,7 @@ import { useChatStore, usePromptStore } from '@/store'
 import { fetchChatAPIProcess } from '@/api'
 import { t } from '@/locales'
 import { json } from 'stream/consumers'
+import { chatGus } from '@/api/chat'
 
 let controller = new AbortController()
 
@@ -41,6 +42,12 @@ const prompt = ref<string>('')
 const loading = ref<boolean>(false)
 const inputRef = ref<Ref | null>(null)
 
+interface IQuestion {
+  question: string
+  sort: number
+}
+const questions = ref<IQuestion[]>([])
+
 // 添加PromptStore
 const promptStore = usePromptStore()
 
@@ -57,8 +64,26 @@ function handleSubmit() {
   onConversation()
 }
 
-async function onConversation() {
-  let message = prompt.value
+function handleSubmitWithPrompt(question: string) {
+  onConversation(question)
+}
+
+/**
+ * 获取猜你想问
+ * @param question 
+ */
+const getQuestions = async () => {
+  const data: any = await chatGus({
+    chatId: '',
+  })
+  if (data) questions.value = data
+}
+
+async function onConversation(question?: string) {
+
+  // getQuestions()
+
+  let message = question || prompt.value
 
   if (loading.value)
     return
@@ -121,8 +146,9 @@ async function onConversation() {
 
           let resText = ''
           responseArr.forEach((item: any) => {
-            if (item) {
-              const itemData = JSON.parse(item.substring(5))
+            const substrText = item && item.length > 5 ? item.substring(5) : ''
+            if (substrText) {
+              const itemData = JSON.parse(substrText)
               resText += itemData.content || ''
             }
           })
@@ -135,7 +161,7 @@ async function onConversation() {
           try {
             // const data = JSON.parse(chunk)
             const data = responseArr[responseArr.length - 1]
-            
+
             updateChat(
               +uuid,
               dataSources.value.length - 1,
@@ -264,11 +290,12 @@ async function onRegenerate(index: number) {
 
           let responseArr = responseText.split('\n')
           responseArr = responseArr.filter((item: any) => { return item })
-          
+
           let resText = ''
           responseArr.forEach((item: any) => {
-            if (item) {
-              const itemData = JSON.parse(item.substring(5))
+            const substrText = item && item.length > 5 ? item.substring(5) : ''
+            if (substrText) {
+              const itemData = JSON.parse(substrText)
               resText += itemData.content || ''
             }
           })
@@ -483,6 +510,7 @@ const footerClass = computed(() => {
 })
 
 onMounted(() => {
+  getQuestions()
   scrollToBottom()
   if (inputRef.value && !isMobile.value)
     inputRef.value?.focus()
@@ -508,7 +536,8 @@ onUnmounted(() => {
               <div class="text-lg text-neutral-600">数智</div>
               <div class="mt-2">我可以自动通过全网数据分析了解市场动态</div>
               <div class="mt-1">为您的公司业务提高投资回报率</div>
-              <div class="mt-2 cursor-pointer underline text-blue-600">了解我能做什么？</div>
+              <div class="mt-2 cursor-pointer underline text-[#18a058]" @click="handleSubmitWithPrompt('你能做什么?')">
+                了解我能做什么？</div>
             </div>
           </template>
           <template v-else>
@@ -530,6 +559,10 @@ onUnmounted(() => {
       </div>
     </main>
     <footer :class="footerClass">
+      <div class="w-full max-w-screen-xl mb-2 m-auto flex justify-center flex-wrap" v-if="questions && questions.length > 0 && !dataSources.length">
+        <div>你可能想问:</div>
+        <a-tag v-for="(item, index) of questions" class="ml-3 cursor-pointer" :key="index" color="#36ad6a" @click="handleSubmitWithPrompt(item.question)">{{ item.question }}</a-tag>
+      </div>
       <div class="w-full max-w-screen-xl m-auto">
         <div class="flex items-center justify-between space-x-2">
           <HoverButton v-if="!isMobile" @click="handleClear">
@@ -542,11 +575,11 @@ onUnmounted(() => {
               <SvgIcon icon="ri:download-2-line" />
             </span>
           </HoverButton>
-          <HoverButton @click="toggleUsingContext">
+          <!-- <HoverButton @click="toggleUsingContext">
             <span class="text-xl" :class="{ 'text-[#4b9e5f]': usingContext, 'text-[#a8071a]': !usingContext }">
               <SvgIcon icon="ri:chat-history-line" />
             </span>
-          </HoverButton>
+          </HoverButton> -->
           <NAutoComplete v-model:value="prompt" :options="searchOptions" :render-label="renderOption">
             <template #default="{ handleInput, handleBlur, handleFocus }">
               <NInput ref="inputRef" v-model:value="prompt" type="textarea" :placeholder="placeholder"

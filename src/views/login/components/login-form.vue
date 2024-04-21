@@ -54,6 +54,7 @@ import { useUserStore } from '@/store';
 import useLoading from '@/hooks/loading';
 // import type { LoginData } from '@/api/user';
 import { accountLogin, accountInfo } from '@/api/user'
+import { imageViewApi } from '@/api/common'
 import { isMobile } from '@/utils/index'
 import { setStorage } from '@/utils/arco-storage'
 import CryptoJS from 'crypto-js'
@@ -100,7 +101,6 @@ const handleSubmit = async ({
   if (loading.value) return;
   if (!errors) {
     setLoading(true);
-    console.log(values)
     try {
       const md5Hash = CryptoJS.MD5(values.password).toString()
       console.log(router.currentRoute.value)
@@ -114,8 +114,8 @@ const handleSubmit = async ({
       if (!loginRes) return setLoading(false)
       if (!loginRes.token) return Message.error('登录错误')
 
-      // 存token
-      setStorage('AuthToken', loginRes.token, 60 * 1000)
+      // 存token 30分钟
+      setStorage('AuthToken', loginRes.token, 30 * 60)
 
       // 记住密码
       const { rememberPassword } = loginConfig.value;
@@ -128,6 +128,25 @@ const handleSubmit = async ({
 
       if (userInfo) {
         setStorage('userInfo', JSON.stringify(userInfo))
+        userStore.updateUserInfo(userInfo)
+
+        const { headPic } = userInfo
+
+        // 下载头像
+        if (headPic) {
+          const imageData: any = await imageViewApi({ imageKey: headPic })
+
+          if (imageData && imageData.image) {
+            const headPicUrl = 'data:image/jpeg;base64,' + imageData.image
+            userStore.updateUserInfo({
+              headPicUrl
+            })
+          }
+        } else {
+          userStore.updateUserInfo({
+            headPicUrl: ''
+          })
+        }
 
         Message.success('登录成功')
         setLoading(false)
@@ -141,7 +160,7 @@ const handleSubmit = async ({
         } else {
           router.push('/')
         }
-      }else{
+      } else {
         setLoading(false)
       }
 

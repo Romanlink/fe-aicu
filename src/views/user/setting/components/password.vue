@@ -5,8 +5,15 @@
         required: true,
         message: '请输入旧密码',
       },
+      { minLength: 6, message: '6-18位密码，字母数字组合' },
+      { maxLength: 18, message: '6-18位密码，字母数字组合' },
+      {
+        validator: passwordValidate,
+      }
     ]">
-      <a-input v-model="formData.oldPassword" placeholder="请输入旧密码" />
+      <a-input-password v-model="formData.oldPassword" :min-length="6" :max-length="18" placeholder="请输入旧密码"
+        allow-clear>
+      </a-input-password>
     </a-form-item>
 
     <a-form-item field="newPassword" label="新密码" :rules="[
@@ -14,22 +21,39 @@
         required: true,
         message: '请输入新密码',
       },
+      { minLength: 6, message: '6-18位密码，字母数字组合' },
+      { maxLength: 18, message: '6-18位密码，字母数字组合' },
+      {
+        validator: passwordValidate,
+      }
     ]">
-      <a-input v-model="formData.newPassword" placeholder="请输入新密码" />
+      <a-input-password v-model="formData.newPassword" :min-length="6" :max-length="18" placeholder="请输入新密码"
+        allow-clear>
+      </a-input-password>
     </a-form-item>
 
-    <a-form-item field="newPasswordConfirm" label="确认密码" :rules="[
+    <a-form-item field="rePassword" label="确认密码" :rules="[
       {
         required: true,
         message: '请再次输入密码',
       },
+      { minLength: 6, message: '6-18位密码，字母数字组合' },
+      { maxLength: 18, message: '6-18位密码，字母数字组合' },
+      {
+        validator: passwordValidate,
+      },
+      {
+        validator: passwordConfirm,
+      }
     ]">
-      <a-input v-model="formData.newPasswordConfirm" placeholder="请再次输入密码" />
+      <a-input-password v-model="formData.rePassword" :min-length="6" :max-length="18" placeholder="请再次输入密码"
+        allow-clear>
+      </a-input-password>
     </a-form-item>
 
     <a-form-item>
       <a-space>
-        <a-button type="primary" @click="validate">
+        <a-button type="primary" :loading="loading" @click="validate">
           保存
         </a-button>
         <a-button type="secondary" @click="reset">
@@ -42,26 +66,62 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { FormInstance } from '@arco-design/web-vue/es/form';
+import { modifyPass } from '@/api/user'
+import useLoading from '@/hooks/loading';
+import { Message } from '@arco-design/web-vue';
+import { useRouter } from 'vue-router';
 
 interface IForms {
   oldPassword: string
   newPassword: string
-  newPasswordConfirm: string
+  rePassword: string
 }
 
+const { loading, setLoading } = useLoading();
+
+const router = useRouter();
+
 const formRef = ref<FormInstance>();
-const formData = ref<IForms>({
+const formData = reactive<IForms>({
   oldPassword: '',
   newPassword: '',
-  newPasswordConfirm: ''
+  rePassword: ''
 });
+
+// password validate
+const passwordValidate = (value: any, callback: any) => {
+  const regex = /^[A-Za-z0-9]+$/
+  if (value && !regex.test(value)) {
+    callback('6-18位密码，字母数字组合')
+  }
+}
+
+// password validate
+const passwordConfirm = (value: any, callback: any) => {
+  if (value !== formData.newPassword) {
+    callback('两次密码不一致，请重新输入')
+  }
+}
+
+// 提交
 const validate = async () => {
   const res = await formRef.value?.validate();
   if (!res) {
-    // do some thing
-    // you also can use html-type to submit
+    
+    setLoading(true)
+
+    modifyPass(formData).then((res) => {
+      if (!res) return
+      Message.success('修改成功')
+      localStorage.AuthToken = ''
+      localStorage.userInfo = ''
+      router.push('/login')
+
+    }).finally(() => {
+      setLoading(false)
+    })
   }
 };
 const reset = async () => {

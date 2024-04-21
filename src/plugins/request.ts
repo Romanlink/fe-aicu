@@ -1,10 +1,10 @@
 import axios from 'axios'
 
 import { Message } from '@arco-design/web-vue';
-import { getStorage } from '@/utils/arco-storage'
+import { getStorage, setStorage } from '@/utils/arco-storage'
 
 const myAxios = axios.create({
-    baseURL: '/api/v2',
+    baseURL: import.meta.env.VITE_GLOB_API_URL,
     timeout: 1000 * 60, // 请求超时时间 60s
     headers: {
         AuthToken: getStorage('AuthToken') || '',
@@ -13,12 +13,6 @@ const myAxios = axios.create({
     }
 })
 
-// console.log(process.env.NODE_ENV)
-console.log(axios.defaults.baseURL)
-
-// post请求头
-// axios.defaults.headers['Content-Type'] = 'application/json'
-
 myAxios.interceptors.request.use(
     (config: any) => {
         // 每次发送请求之前判断是否存在token，如果存在，则统一在http请求的header都加上token，不用每次请求都手动添加了
@@ -26,17 +20,14 @@ myAxios.interceptors.request.use(
         const token = getStorage('AuthToken')
         token && (config.headers['AuthToken'] = token)
 
-        if (config.url.indexOf('/upload') > -1) {
+        if (config.url.indexOf('/image/upload') > -1) {
             config.headers['Content-Type'] = 'multipart/form-data'
         }
 
-        console.log(config)
-
         // 重新设置token有效期 30分钟
-        // const token = getExpire('token');
-        // if (token && localStorage.adminName) {
-        //   setExpire('token', token, 30 * 60);
-        // }
+        if (token) {
+            setStorage('AuthToken', token, 30 * 60)
+        }
 
         return config
     },
@@ -48,7 +39,6 @@ myAxios.interceptors.request.use(
 
 myAxios.interceptors.response.use(
     (response) => {
-        console.log(response)
         // 200 请求成功
         if ((response.status === 200 || response.status === 201) && response.data.code == 0) {
             if (response.data.data) {
@@ -67,7 +57,6 @@ myAxios.interceptors.response.use(
         }
     },
     (error) => {
-        console.log(error.response)
         if (error.response && error.response.data.code == 'MUC100001' && error.response.data.message.indexOf('当前公司已注册') > -1) {
             return Promise.resolve(error.response.data)
         } else if (error.response) {
@@ -147,7 +136,6 @@ export function del(url: string) {
  */
 export function post(url: string, params: any) {
     return new Promise((resolve, reject) => {
-        console.log(params)
         myAxios
             .post(url, params)
             .then((res) => {

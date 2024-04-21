@@ -19,11 +19,13 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router';
-
-import { addCompany } from '@/api/user'
+import { addCompany, accountInfo } from '@/api/user'
 import { Message } from '@arco-design/web-vue';
 import useLoading from '@/hooks/loading';
+import { useUserStore } from '@/store';
+
 const router = useRouter();
+const userStore = useUserStore();
 
 const isShowAlert = ref<boolean>(false) // 提示框是否显示
 const alertMsg = ref('') // 提示信息
@@ -46,8 +48,9 @@ const handleSubmit = () => {
     console.log(res)
     if (!res) return
     if (res.orgName) {
-      Message.success('操作成功')
-      router.push('/')
+      userStore.updateUserInfo({ orgName: orgName.value })
+      getAccountInfo()
+
     } else if (res.message && !res.success) {
       isShowAlert.value = !isShowAlert.value
       alertMsg.value = res.message
@@ -56,6 +59,23 @@ const handleSubmit = () => {
     setLoading(false)
   })
   // isShowAlert.value = !isShowAlert.value
+}
+
+// 获取用户信息
+const getAccountInfo = async () => {
+  try {
+    accountInfo({}).then(res => {
+      if (!res) return
+      userStore.updateUserInfo(res)
+      Message.success('操作成功')
+      router.push('/')
+    }).finally(() => {
+      setLoading(false)
+    })
+  } catch {
+    setLoading(false)
+  }
+
 }
 </script>
 

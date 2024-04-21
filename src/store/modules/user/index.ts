@@ -6,7 +6,11 @@ export const useUserStore = defineStore('user-store', {
   state: (): UserState => getLocalState(),
   actions: {
     updateUserInfo(userInfo: Partial<UserInfo>) {
-      this.userInfo = { ...this.userInfo, ...userInfo }
+      // this.userInfo = { ...this.userInfo, ...userInfo }
+
+      const newData = JSON.parse(JSON.stringify({ ...this.userInfo, ...userInfo }))
+      this.userInfo = newData
+
       this.recordState()
     },
 
