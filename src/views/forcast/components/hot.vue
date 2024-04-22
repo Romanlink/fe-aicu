@@ -4,23 +4,26 @@
       <a-col :sm="24" :lg="16" :xl="16" :xxl="16">
         <a-card :bordered="false" :header-style="{ padding: '16px 0' }" :body-style="{ padding: '16px 0' }">
           <template #title>
-            <s-space><icon-fire /> 热点 </s-space>
+            <a-space><icon-fire /> 热点 </a-space>
           </template>
-          <div class="news">
-            <div class="new" v-for="(m, newIndex) in 10" :key="newIndex">
-              <div class="new-title">
-                <a class="full-cover-link"></a>
-                住建部长：支持不同所有制房企合理融资需求，白名单项目已审批贷款超2000亿元
-              </div>
-              <div class="new-time"><a-tag size="small" color="orange" bordered>正面</a-tag>2020.03.04 12:00:00</div>
-              <div class="new-desc">
-                十四届全国人大二次会议9日下午举行记者会，住房和城乡建设部部长倪虹表示，防风险，要一视同仁，支持不同所有制房地产企业合理融资需求。当前房地产的难点是资金，我们在调研当中好的企业也有困难的项目，困难的企业我们也看到有好的项目，为此我们会同金融监管总局指导地方建立城
+          <a-spin :loading="newsLoading" style="width: 100%">
+            <div class="news">
+              <div class="new" v-for="(m, newIndex) in news.data" :key="newIndex">
+                <div class="new-title">
+                  <a class="full-cover-link"></a>
+                  {{ m.title }}
+                </div>
+                <div class="new-time"><a-tag size="small" color="orange" bordered>{{ m.level }}</a-tag>{{
+                  moment(m.time).format('YYYY-MM-DD HH:mm:ss') }}</div>
+                <div class="new-desc">
+                  {{ m.content }}
+                </div>
               </div>
             </div>
-          </div>
-          <div class="page">
-            <a-pagination :total="200" />
-          </div>
+            <div class="page">
+              <a-pagination :total="total" />
+            </div>
+          </a-spin>
         </a-card>
       </a-col>
       <a-col :sm="24" :lg="8" :xl="8" :xxl="8">
@@ -43,7 +46,22 @@ import {
   LegendComponent
 } from "echarts/components";
 import VChart from "vue-echarts";
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import moment from 'moment'
+
+
+const props = defineProps<{
+  newsLoading: boolean
+  news: any
+}>()
+
+const total = ref<number>(0)
+
+watch(() => props.news, (val) => {
+  total.value = props.news.data.length || 0
+})
+
+
 
 use([
   CanvasRenderer,

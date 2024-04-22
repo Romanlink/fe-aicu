@@ -1,24 +1,27 @@
 <template>
-    <a-card :bordered="false" style="margin-bottom: 16px">
-        <a-row :gutter="20">
-            <a-col :sm="24" :lg="16" :xl="16" :xxl="16">
-                <v-chart class="chart" :option="option" autoresize />
-            </a-col>
-            <a-col :sm="24" :lg="8" :xl="8" :xxl="8">
-                <div class=""></div>
+  <a-card :bordered="false" style="margin-bottom: 16px">
+    <a-row :gutter="20">
+      <a-col :sm="24" :lg="16" :xl="16" :xxl="16">
+        <a-spin :loading="priceLoading" style="width: 100%">
+          <v-chart class="chart" :option="option" autoresize />
+        </a-spin>
+      </a-col>
+      <a-col :sm="24" :lg="8" :xl="8" :xxl="8">
+        <div class=""></div>
+        <a-spin :loading="forcastLoading" style="width: 100%">
 
-                <a-card :bordered="false" style="margin: 15px 0 0" :header-style="{ padding: '16px 0' }"
-                    :body-style="{ padding: '16px 0' }">
-                    <template #title>
-                        <s-space><icon-computer /> 预测</s-space>
-                    </template>
-                    预计2024年3月4日螺纹钢价格达到xxxx元，建议卖出，市场情绪为中立。
-                    宏观上受xxx影响，xxxxx。
-                </a-card>
-            </a-col>
-        </a-row>
+          <a-card :bordered="false" class="chart" style="margin: 15px 0 0" :header-style="{ padding: '16px 0' }"
+            :body-style="{ padding: '16px 0' }">
+            <template #title>
+              <a-space><icon-computer /> 预测</a-space>
+            </template>
+            {{ forcast || '-' }}
+          </a-card>
+        </a-spin>
+      </a-col>
+    </a-row>
 
-    </a-card>
+  </a-card>
 </template>
 
 <script lang="ts" setup>
@@ -32,7 +35,8 @@ import {
   LegendComponent
 } from "echarts/components";
 import VChart from "vue-echarts";
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import moment from 'moment'
 
 use([
   CanvasRenderer,
@@ -42,39 +46,59 @@ use([
   LegendComponent
 ]);
 
-const option = ref({
-  title: {
-    text: "螺纹钢",
-    left: "left"
-  },
-  tooltip: {
-    trigger: "item",
-    formatter: "{a} <br/>{b} : {c} ({d}%)"
-  },
-  color: ['#165dff'],
-  legend: {
-    orient: "vertical",
-    left: "left",
-    data: ["Direct", "Email", "Ad Networks", "Video Ads", "Search Engines"]
-  },
-  xAxis: {
-    type: 'category',
-    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-  },
-  yAxis: {
-    type: 'value'
-  },
-  series: [
-    {
-      data: [820, 932, 901, 934, 1290, 1330, 1320],
-      type: 'line',
-      smooth: true
-    }
-  ]
-});
+const props = defineProps<{
+  priceLoading: boolean
+  forcastLoading: boolean
+  symbol: string | undefined
+  prices: any
+  forcast: string
+}>()
 
+watch(() => props.prices, (val) => {
+  setOption()
+})
 
+let option = ref({})
 
+const setOption = () => {
+  const xData: string[] = []
+  const seriesData: number[] = []
+  props.prices.forEach((item: any) => {
+    const { time, price } = item
+    xData.push(moment(time).format('YYYY-MM-DD'))
+    seriesData.push(price)
+  })
+  option.value = {
+    title: {
+      text: props.symbol,
+      left: "left"
+    },
+    tooltip: {
+      trigger: "item",
+      formatter: "{a} <br/>{b} : {c} ({d}%)"
+    },
+    color: ['#165dff'],
+    // legend: {
+    //   orient: "vertical",
+    //   left: "left",
+    //   data: ["Direct", "Email", "Ad Networks", "Video Ads", "Search Engines"]
+    // },
+    xAxis: {
+      type: 'category',
+      data: xData
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        data: seriesData,
+        type: 'line',
+        smooth: true
+      }
+    ]
+  }
+}
 </script>
 
 <style scoped lang="less">

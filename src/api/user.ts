@@ -64,14 +64,14 @@ export function modifyPass(params: any) {
 } 
 
 
-// /**
-//  * 修改头像
-//  * @param params 
-//  * @returns hhh
-//  */
-// export function modifyHeadPic(params: any) {
-//     return post('/account/modify-pass', params)
-// } 
+/**
+ * 修改头像
+ * @param params 
+ * @returns hhh
+ */
+export function modifyHdApi(params: any) {
+    return post('/account/modify-hd', params)
+} 
 
 /**
  * 修改公司名称

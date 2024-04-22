@@ -52,7 +52,7 @@ import { useUserStore } from '@/store';
 import defaultAvatar from '@/assets/avatar.jpg'
 import moment from 'moment'
 import { imageUploadApi, imageViewApi } from '@/api/common'
-import { modifyPass } from '@/api/user'
+import { modifyHdApi } from '@/api/user'
 import { Message } from '@arco-design/web-vue';
 import useLoading from '@/hooks/loading';
 
@@ -126,11 +126,11 @@ const handleUpload = async (options: RequestOption) => {
   }
 
   // 更新头像
-  // const user = await modifyPass({ headPic: imageKey })
-  // if (!user) {
-  //   setLoading(false)
-  //   return
-  // }
+  const user = await modifyHdApi({ headPic: imageKey })
+  if (!user) {
+    setLoading(false)
+    return
+  }
 
   // 下载头像
   const imageData: any = await imageViewApi({ imageKey })
