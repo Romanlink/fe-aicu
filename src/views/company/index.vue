@@ -11,32 +11,51 @@
         <a-tabs default-active-key="1">
           <template #extra>
             <a-button type="primary" @click="handeAddStaff">添加员工</a-button>
+            <!-- <template v-if="userInfo.status === 1">
+              <a-button type="primary" @click="handeAddStaff">添加员工</a-button>
+              <div class="ml-3">还可添加 1 人</div>
+            </template>
+            <template v-else>
+              <a-button type="primary" disabled>添加员工</a-button>
+              <div class="ml-3">您当前为试用版，无法添加员工</div>
+            </template> -->
           </template>
           <a-tab-pane key="1" title="员工管理">
-            <StaffList />
+            <StaffList ref="staffListRef" />
           </a-tab-pane>
         </a-tabs>
       </a-col>
     </a-row>
 
-    <AddStaff ref="addStaffRef" />
+    <AddStaff ref="addStaffRef" @getAccountList="getAccountList" />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useUserStore } from '@/store';
 
 import CompanyPanel from './components/company-panel.vue';
 import StaffList from './components/staff-list.vue'
 import AddStaff from './components/add-staff.vue'
 
+const userStore = useUserStore();
+const userInfo = computed(() => userStore.userInfo)
+
 // 添加员工
 const addStaffRef = ref(null)
+const staffListRef = ref(null)
 
 // 添加员工
 const handeAddStaff = () => {
   if (addStaffRef?.value) {
     addStaffRef.value.handleShow()
+  }
+}
+
+const getAccountList = () => {
+  if (staffListRef?.value) {
+    staffListRef.value.getAccountList()
   }
 }
 

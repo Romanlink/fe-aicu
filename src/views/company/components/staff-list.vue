@@ -1,49 +1,67 @@
 <template>
-  <a-table :columns="columns" :data="data">
-    <template #role="{ record }">
-      <template v-if="record.role == 1">公司管理员</template>
-      <template v-if="record.role == 2">员工</template>
+  <a-table :columns="columns" :data="data" :loading="loading">
+    <template #regTime="{ record }">
+      <template v-if="record.regTime">{{ moment(record.regTime).format('YYYY-MM-DD HH:mm:ss') }}</template>
+      <template v-else>-</template>
+    </template>
+    <template #optResult="{ record }">
+      <template v-if="record.optResult">公司管理员</template>
+      <template v-else>员工</template>
     </template>
     <template #action="{ record }">
-      <a-button type="text" v-if="record.role == 2" style="margin: 0 10px 0 0" @click="openAdminModal">提升为管理员</a-button>
-      <a-button type="text" @click="openQuitModal">退出公司</a-button>
+      <a-button type="text" v-if="!record.optResult" style="margin: 0 10px 0 0"
+        @click="openAdminModal(record)">提升为管理员</a-button>
+      <a-button type="text" @click="openQuitModal(record)">退出公司</a-button>
     </template>
   </a-table>
   <a-modal v-model:visible="adminVisible" width="450px" title="提升为管理员" @cancel="adminVisible = false"
     @before-ok="handleAddAdmin">
-    <a-alert>每个公司只能有一个管理员，提升手机号<strong>18633841932</strong>为管理员后，您将降级成为员工，点击确定会退出系统重新登录。</a-alert>
+    <a-alert>每个公司只能有一个管理员，提升手机号<strong class="mx-1" v-if="selectData && selectData.loginPhone">{{ selectData.loginPhone
+        }}</strong>为管理员后，您将降级成为员工，点击确定会退出系统重新登录。</a-alert>
   </a-modal>
   <a-modal v-model:visible="quitVisible" width="450px" title="退出公司" @cancel="quitVisible = false"
     @before-ok="handleQuitCompany">
-    <a-alert>手机号<strong>1860000000</strong>退出公司后重新加入一家公司才能使用该系统，点击确定会强制退出系统。</a-alert>
+    <a-alert>手机号<strong class="mx-1" v-if="selectData && selectData.loginPhone">{{ selectData.loginPhone
+        }}</strong>退出公司后重新加入一家公司才能使用该系统，点击确定会强制退出系统。</a-alert>
   </a-modal>
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
+import { accountListApi } from '@/api/user'
+import useLoading from '@/hooks/loading';
+import moment from 'moment'
+import { accountUpApi, accountUnbindApi } from '@/api/user'
+import { Message } from '@arco-design/web-vue';
+import { useRouter } from 'vue-router';
+
+const { loading, setLoading } = useLoading();
+
+const router = useRouter();
 
 // columns config
 const columns = ref([
   {
     title: '序号',
-    dataIndex: 'index',
+    dataIndex: 'id',
   },
   {
     title: '手机号',
-    dataIndex: 'mobile',
+    dataIndex: 'loginPhone',
   },
   {
     title: '昵称',
-    dataIndex: 'nickname',
+    dataIndex: 'nickName',
   },
   {
     title: '添加时间',
-    dataIndex: 'create_time',
+    dataIndex: 'regTime',
+    slotName: 'regTime',
   },
   {
     title: '角色',
-    dataIndex: 'role',
-    slotName: 'role'
+    dataIndex: 'optResult',
+    slotName: 'optResult'
   },
   {
     title: '操作',
@@ -54,51 +72,64 @@ const columns = ref([
 ])
 
 // source data
-const data = ref([{
-  key: '1',
-  index: 1000,
-  mobile: 18011112222,
-  nickname: "Jack",
-  create_time: '2024-04-10 19:00:00',
-  role: 1
-}, {
-  key: '2',
-  index: 1001,
-  mobile: 18011112223,
-  nickname: "Cxl",
-  create_time: '2024-04-10 19:00:00',
-  role: 2
-}])
-
+const data = ref<any>([])
+const selectData = ref<any>()
 
 const adminVisible = ref<boolean>(false) // 提升为管理员
 const quitVisible = ref<boolean>(false) // 退出公司
 
 // 打开提升为管理员弹窗
-const openAdminModal = () => {
+const openAdminModal = (record) => {
+  selectData.value = record
   adminVisible.value = true
 }
 
-// 提升为管理员 event
-const handleAddAdmin = (done: any) => {
-  adminVisible.value = true
-  window.setTimeout(() => {
+// 提升为管理员
+const handleAddAdmin = async (done: any) => {
+  const res = await accountUpApi({ id: selectData.value.id })
+  if (res) {
+    Message.success('操作成功')
     done()
-  }, 2000)
+    localStorage.AuthToken = ''
+    localStorage.userInfo = ''
+    router.push('/login')
+  } else {
+    return false
+  }
 }
 
 // 打开退出公司弹窗
-const openQuitModal = () => {
+const openQuitModal = (record) => {
+  selectData.value = record
   quitVisible.value = true
 }
 
-// 退出公司 event
-const handleQuitCompany = (done: any) => {
-  quitVisible.value = true
-  window.setTimeout(() => {
+// 退出公司
+const handleQuitCompany = async (done: any) => {
+  const res = await accountUnbindApi({ id: selectData.value.id })
+  if (res) {
+    Message.success('操作成功')
     done()
-    // prevent close
-    // done(false)
-  }, 2000)
+    getAccountList()
+  } else {
+    return false
+  }
 }
+
+// fetch account list
+const getAccountList = () => {
+  setLoading(true)
+  accountListApi({}).then((res) => {
+    data.value = res || []
+  }).finally(() => {
+    setLoading(false)
+  })
+}
+
+onMounted(() => {
+  getAccountList()
+})
+
+defineExpose({ getAccountList })
+
 </script>

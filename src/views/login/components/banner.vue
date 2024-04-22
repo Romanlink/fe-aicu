@@ -15,65 +15,70 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue';
-  import { useI18n } from 'vue-i18n';
-  import bannerImage from '@/assets/images/login-banner.png';
+import { computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import bannerImage from '@/assets/images/login-banner.png';
+import { Notification } from '@arco-design/web-vue';
 
-  const { t } = useI18n();
-  const carouselItem = computed(() => [
-    {
-      slogan: '开箱即用的高质量模板',
-      subSlogan: '丰富的的页面模板，覆盖大多数典型业务场景',
-      image: bannerImage,
-    },
-    {
-      slogan: '内置了常见问题的解决方案',
-      subSlogan: '实现灵活的区块式开发',
-      image: bannerImage,
-    },
-  ]);
+const { t } = useI18n();
+const carouselItem = computed(() => [
+  {
+    slogan: '开箱即用的高质量模板',
+    subSlogan: '丰富的的页面模板，覆盖大多数典型业务场景',
+    image: bannerImage,
+  },
+  {
+    slogan: '内置了常见问题的解决方案',
+    subSlogan: '实现灵活的区块式开发',
+    image: bannerImage,
+  },
+]);
+
+onMounted(() => {
+  Notification.clear()
+})
 </script>
 
 <style lang="less" scoped>
-  .banner {
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &-inner {
+    flex: 1;
+    height: 100%;
+  }
+}
+
+.carousel {
+  height: 100%;
+
+  &-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-
-    &-inner {
-      flex: 1;
-      height: 100%;
-    }
-  }
-
-  .carousel {
     height: 100%;
-
-    &-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-    }
-
-    &-title {
-      color: var(--color-fill-1);
-      font-weight: 500;
-      font-size: 20px;
-      line-height: 28px;
-    }
-
-    &-sub-title {
-      margin-top: 8px;
-      color: var(--color-text-3);
-      font-size: 14px;
-      line-height: 22px;
-    }
-
-    &-image {
-      width: 320px;
-      margin-top: 30px;
-    }
   }
+
+  &-title {
+    color: var(--color-fill-1);
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  &-sub-title {
+    margin-top: 8px;
+    color: var(--color-text-3);
+    font-size: 14px;
+    line-height: 22px;
+  }
+
+  &-image {
+    width: 320px;
+    margin-top: 30px;
+  }
+}
 </style>

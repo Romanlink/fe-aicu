@@ -26,7 +26,7 @@ const handleBeforeOk = async (done: any) => {
   if (!form.nickName) {
     Message.warning('请输入昵称')
     done()
-    return
+    return false
   }
 
   const res = await accountEdit({ nickName: form.nickName })

@@ -94,13 +94,14 @@
 </template>
 
 <script lang="ts" setup>
-import { PropType } from 'vue';
+import { PropType, h } from 'vue';
 import { onMounted, computed } from 'vue';
 // import { Message } from '@arco-design/web-vue';
 import { useRouter } from 'vue-router';
 import { useFullscreen } from '@vueuse/core';
 import defaultAvatar from '@/assets/avatar.jpg'
 import { useUserStore } from '@/store';
+import { Notification } from '@arco-design/web-vue';
 
 const userStore = useUserStore();
 const userInfo = computed(() => userStore.userInfo)
@@ -109,13 +110,28 @@ const { isFullscreen, toggle: toggleFullScreen } = useFullscreen();
 
 const router = useRouter();
 
-
 // 加密手机号
 const encryptPhoneNumber = (phoneNumber: string) => {
   return phoneNumber.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
 }
 
 onMounted(() => {
+
+  const { status } = userInfo.value
+  if (status !== 1) {
+    Notification.clear()
+    Notification.warning({
+      title: '当前为试用版',
+      content: () => {
+        return h('div', {}, [h('div', '联系商务开通正式版'), h('div', '18633841932'),])
+      },
+      position: "bottomLeft",
+      duration: 365 * 24 * 60 * 60 * 1000,
+      // closable: false,
+      style: { width: '240px', left: 0 },
+      closable: true,
+    })
+  }
 })
 
 defineProps({

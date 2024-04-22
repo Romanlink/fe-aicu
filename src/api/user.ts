@@ -82,4 +82,42 @@ export function orgEditApi(params: any) {
     return post('/org/edit', params)
 } 
 
+/**
+ * 管理员列表
+ * @param params 
+ * @returns hhh
+ */
+export function accountListApi(params: any) {
+    return post('/account/list', params)
+} 
+
+/**
+ * 新增员工
+ * @param params 
+ * @returns hhh
+ */
+export function accountBindApi(params: any) {
+    return post('/account/bind', params)
+} 
+
+/**
+ * 提升管理员
+ * @param params 
+ * @returns hhh
+ */
+export function accountUpApi(params: any) {
+    return post('/account/up', params)
+} 
+
+/**
+ * 退出公司
+ * @param params 
+ * @returns hhh
+ */
+export function accountUnbindApi(params: any) {
+    return post('/account/unbind', params)
+} 
+
+
+
 
