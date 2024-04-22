@@ -72,6 +72,7 @@ import { modifyPass } from '@/api/user'
 import useLoading from '@/hooks/loading';
 import { Message } from '@arco-design/web-vue';
 import { useRouter } from 'vue-router';
+import CryptoJS from 'crypto-js'
 
 interface IForms {
   oldPassword: string
@@ -109,10 +110,14 @@ const passwordConfirm = (value: any, callback: any) => {
 const validate = async () => {
   const res = await formRef.value?.validate();
   if (!res) {
-    
+
     setLoading(true)
 
-    modifyPass(formData).then((res) => {
+    modifyPass({
+      oldPassword: CryptoJS.MD5(formData.oldPassword).toString(),
+      newPassword: CryptoJS.MD5(formData.newPassword).toString(),
+      rePassword: CryptoJS.MD5(formData.rePassword).toString(),
+    }).then((res) => {
       if (!res) return
       Message.success('修改成功')
       localStorage.AuthToken = ''
