@@ -14,6 +14,7 @@ export interface UserInfo {
   headPicUrl?: string
   regTime?: string
   status?: number
+  type?: number | string
 }
 
 export interface UserState {

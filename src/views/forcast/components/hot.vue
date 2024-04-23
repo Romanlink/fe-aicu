@@ -10,7 +10,7 @@
             <div class="news">
               <div class="new" v-for="(m, newIndex) in news.data" :key="newIndex">
                 <div class="new-title">
-                  <a class="full-cover-link"></a>
+                  <a class="full-cover-link" :href="m.url || ''" target="_blank"></a>
                   {{ m.title }}
                 </div>
                 <div class="new-time"><a-tag size="small" color="orange" bordered>{{ m.level }}</a-tag>{{

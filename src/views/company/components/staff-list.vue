@@ -4,12 +4,12 @@
       <template v-if="record.regTime">{{ moment(record.regTime).format('YYYY-MM-DD HH:mm:ss') }}</template>
       <template v-else>-</template>
     </template>
-    <template #optResult="{ record }">
-      <template v-if="record.optResult">公司管理员</template>
+    <template #type="{ record }">
+      <template v-if="record.type == 1">公司管理员</template>
       <template v-else>员工</template>
     </template>
     <template #action="{ record }">
-      <a-button type="text" v-if="!record.optResult" style="margin: 0 10px 0 0"
+      <a-button type="text" v-if="record.type != 1" style="margin: 0 10px 0 0"
         @click="openAdminModal(record)">提升为管理员</a-button>
       <a-button type="text" @click="openQuitModal(record)">退出公司</a-button>
     </template>
@@ -60,8 +60,8 @@ const columns = ref([
   },
   {
     title: '角色',
-    dataIndex: 'optResult',
-    slotName: 'optResult'
+    dataIndex: 'type',
+    slotName: 'type'
   },
   {
     title: '操作',
@@ -79,7 +79,7 @@ const adminVisible = ref<boolean>(false) // 提升为管理员
 const quitVisible = ref<boolean>(false) // 退出公司
 
 // 打开提升为管理员弹窗
-const openAdminModal = (record) => {
+const openAdminModal = (record: any) => {
   selectData.value = record
   adminVisible.value = true
 }
@@ -99,7 +99,7 @@ const handleAddAdmin = async (done: any) => {
 }
 
 // 打开退出公司弹窗
-const openQuitModal = (record) => {
+const openQuitModal = (record: any) => {
   selectData.value = record
   quitVisible.value = true
 }

@@ -69,7 +69,7 @@
                   </span>
                 </a-space>
               </a-doption>
-              <a-doption>
+              <a-doption v-if="userInfo.type == 1">
                 <a-space @click="$router.push('/company')">
                   <icon-settings />
                   <span>
