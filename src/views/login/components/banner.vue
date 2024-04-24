@@ -23,13 +23,8 @@ import { Notification } from '@arco-design/web-vue';
 const { t } = useI18n();
 const carouselItem = computed(() => [
   {
-    slogan: '开箱即用的高质量模板',
-    subSlogan: '丰富的的页面模板，覆盖大多数典型业务场景',
-    image: bannerImage,
-  },
-  {
-    slogan: '内置了常见问题的解决方案',
-    subSlogan: '实现灵活的区块式开发',
+    slogan: '为钢铁行业打造的AI数据智能工具',
+    subSlogan: '通过全网数据分析市场动态，提高投资回报率',
     image: bannerImage,
   },
 ]);

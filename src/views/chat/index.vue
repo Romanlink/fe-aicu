@@ -533,7 +533,7 @@ onUnmounted(() => {
             <div class="flex items-center flex-col justify-center mt-20 text-center text-neutral-400">
               <!-- <SvgIcon icon="ri:bubble-chart-fill" class="mr-2 text-3xl" />
               <span>{{ t('chat.newChatTitle') }}11111</span> -->
-              <div class="text-lg text-neutral-600">数智</div>
+              <div class="text-lg text-neutral-600">数据熊</div>
               <div class="mt-2">我可以自动通过全网数据分析了解市场动态</div>
               <div class="mt-1">为您的公司业务提高投资回报率</div>
               <div class="mt-2 cursor-pointer underline text-[#18a058]" @click="handleSubmitWithPrompt('你能做什么?')">

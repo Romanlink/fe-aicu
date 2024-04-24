@@ -17,12 +17,14 @@
 
 <script lang="ts" setup>
 import { reactive, ref, defineEmits } from 'vue';
-import { accountBindApi } from '@/api/user'
+import { accountBindApi, accountInfo } from '@/api/user'
 import { Message } from '@arco-design/web-vue';
 import { isMobile } from '@/utils/index'
+import { useUserStore } from '@/store';
+const userStore = useUserStore();
 
 const visible = ref(false);
-const formRef = ref<FormInstance>();
+const formRef = ref();
 const emit = defineEmits(['getAccountList']);
 
 const form = reactive({
@@ -38,7 +40,7 @@ const loginPhoneValidate = (value: any, callback: any) => {
 }
 
 // 提交
-const handleBeforeOk = async (done) => {
+const handleBeforeOk = async (done: any) => {
   const res = await formRef.value?.validate();
   if (!res) {
     const bindRes = await accountBindApi(form)
@@ -46,6 +48,7 @@ const handleBeforeOk = async (done) => {
       emit('getAccountList')
       await formRef.value?.resetFields();
       Message.success('添加成功')
+      getAccountInfo()
       done()
     } else {
       return false
@@ -63,6 +66,18 @@ const handleShow = () => {
 // 隐藏
 const handleCancel = () => {
   visible.value = false;
+}
+
+// 获取用户信息
+const getAccountInfo = async () => {
+  try {
+    accountInfo({}).then(res => {
+      if (!res) return
+      userStore.updateUserInfo(res)
+    }).finally(() => {
+    })
+  } catch {
+  }
 }
 
 defineExpose({ handleShow })

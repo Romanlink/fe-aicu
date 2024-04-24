@@ -15,6 +15,7 @@ export interface UserInfo {
   regTime?: string
   status?: number
   type?: number | string
+  canBindNumber?: string
 }
 
 export interface UserState {

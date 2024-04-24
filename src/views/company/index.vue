@@ -10,15 +10,14 @@
       <a-col :span="24" style="padding: 0 16px 0 0">
         <a-tabs default-active-key="1">
           <template #extra>
-            <a-button type="primary" @click="handeAddStaff">添加员工</a-button>
-            <!-- <template v-if="userInfo.status === 1">
-              <a-button type="primary" @click="handeAddStaff">添加员工</a-button>
-              <div class="ml-3">还可添加 1 人</div>
+            <template v-if="userInfo.status == 1">
+              <a-button type="primary" @click="handeAddStaff" :disabled="canBind == 0">添加员工</a-button>
+              <div class="ml-3">还可添加 {{ userInfo.canBindNumber }} 人</div>
             </template>
             <template v-else>
               <a-button type="primary" disabled>添加员工</a-button>
               <div class="ml-3">您当前为试用版，无法添加员工</div>
-            </template> -->
+            </template>
           </template>
           <a-tab-pane key="1" title="员工管理">
             <StaffList ref="staffListRef" />
@@ -32,7 +31,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useUserStore } from '@/store';
 
 import CompanyPanel from './components/company-panel.vue';
@@ -41,6 +40,19 @@ import AddStaff from './components/add-staff.vue'
 
 const userStore = useUserStore();
 const userInfo = computed(() => userStore.userInfo)
+
+const { canBindNumber } = userInfo.value
+
+const canBind = ref()
+if (canBindNumber) {
+  canBind.value = canBindNumber.split('/')[0]
+}
+
+watch(() => userInfo.value, (val) => {
+  if (val && val.canBindNumber) {
+    canBind.value = val.canBindNumber.split('/')[0]
+  }
+})
 
 // 添加员工
 const addStaffRef = ref(null)

@@ -31,13 +31,17 @@ import { ref, reactive, onMounted } from 'vue';
 import { accountListApi } from '@/api/user'
 import useLoading from '@/hooks/loading';
 import moment from 'moment'
-import { accountUpApi, accountUnbindApi } from '@/api/user'
+import { accountUpApi, accountUnbindApi, accountInfo } from '@/api/user'
 import { Message } from '@arco-design/web-vue';
 import { useRouter } from 'vue-router';
+import { useUserStore } from '@/store';
+const userStore = useUserStore();
 
 const { loading, setLoading } = useLoading();
 
 const router = useRouter();
+
+const { userInfo } = userStore
 
 // columns config
 const columns = ref([
@@ -107,10 +111,18 @@ const openQuitModal = (record: any) => {
 // 退出公司
 const handleQuitCompany = async (done: any) => {
   const res = await accountUnbindApi({ id: selectData.value.id })
+
   if (res) {
     Message.success('操作成功')
     done()
-    getAccountList()
+    if (selectData.value.loginPhone == userInfo.loginPhone) {
+      localStorage.AuthToken = ''
+      localStorage.userInfo = ''
+      router.push('/login')
+    } else {
+      getAccountList()
+      getAccountInfo()
+    }
   } else {
     return false
   }
@@ -124,6 +136,18 @@ const getAccountList = () => {
   }).finally(() => {
     setLoading(false)
   })
+}
+
+// 获取用户信息
+const getAccountInfo = async () => {
+  try {
+    accountInfo({}).then(res => {
+      if (!res) return
+      userStore.updateUserInfo(res)
+    }).finally(() => {
+    })
+  } catch {
+  }
 }
 
 onMounted(() => {

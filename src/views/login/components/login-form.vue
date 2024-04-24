@@ -1,6 +1,6 @@
 <template>
   <div class="login-form-wrapper">
-    <div class="login-form-title">登录图鉴科技</div>
+    <div class="login-form-title">登录数据熊</div>
     <div class="login-form-sub-title"></div>
     <div class="login-form-error-msg"></div>
     <a-form ref="loginForm" :model="userInfo" class="login-form" layout="vertical" @submit="handleSubmit">
@@ -103,7 +103,6 @@ const handleSubmit = async ({
     setLoading(true);
     try {
       const md5Hash = CryptoJS.MD5(values.password).toString()
-      console.log(router.currentRoute.value)
 
       // 登录
       const loginRes: any = await accountLogin({
@@ -123,47 +122,18 @@ const handleSubmit = async ({
       loginConfig.value.loginPhone = rememberPassword ? loginPhone : '';
       loginConfig.value.password = rememberPassword ? password : '';
 
-      // 获取用户信息
-      const userInfo: any = await accountInfo({})
-
-      if (userInfo) {
-        setStorage('userInfo', JSON.stringify(userInfo))
-        userStore.updateUserInfo(userInfo)
-
-        const { headPic } = userInfo
-
-        // 下载头像
-        if (headPic) {
-          const imageData: any = await imageViewApi({ imageKey: headPic })
-
-          if (imageData && imageData.image) {
-            const headPicUrl = 'data:image/jpeg;base64,' + imageData.image
-            userStore.updateUserInfo({
-              headPicUrl
-            })
-          }
-        } else {
-          userStore.updateUserInfo({
-            headPicUrl: ''
-          })
-        }
-
-        Message.success('登录成功')
-        setLoading(false)
-
-        if (!userInfo.orgId) {
-          // 未关联企业
-          router.push('/tip/add-company')
-        } else if (userInfo.trial == 0) {
-          // 已过试用期
-          router.push('/tip/expired')
-        } else {
-          router.push('/')
-        }
+      if (!loginRes.orgId) {
+        handleLoginSuccess(loginRes)
       } else {
-        setLoading(false)
+        // 获取用户信息
+        // 未绑定企业，该接口报错
+        const userInfo: any = await accountInfo({})
+        if (userInfo) {
+          handleLoginSuccess(userInfo)
+        } else {
+          setLoading(false)
+        }
       }
-
     } catch (err) {
       errorMessage.value = (err as Error).message;
     } finally {
@@ -171,6 +141,47 @@ const handleSubmit = async ({
     }
   }
 };
+
+// 登录成功
+const handleLoginSuccess = async (userInfo: any) => {
+  setStorage('userInfo', JSON.stringify(userInfo))
+  userStore.updateUserInfo(userInfo)
+
+  const { headPic } = userInfo
+
+  // 下载头像
+  if (headPic) {
+    const imageData: any = await imageViewApi({ imageKey: headPic })
+
+    if (imageData && imageData.image) {
+      const headPicUrl = 'data:image/jpeg;base64,' + imageData.image
+      userStore.updateUserInfo({
+        headPicUrl
+      })
+    }
+  } else {
+    userStore.updateUserInfo({
+      headPicUrl: ''
+    })
+  }
+
+  Message.success('登录成功')
+  setLoading(false)
+
+  // if (!userInfo.orgId) {
+  //   // 未关联企业
+  //   router.push('/tip/add-company')
+  // } else if (userInfo.trial == 0) {
+  //   // 已过试用期
+  //   router.push('/tip/expired')
+  // } else {
+  //   router.push('/')
+  // }
+
+  router.push('/')
+}
+
+
 const setRememberPassword = (value: boolean) => {
   loginConfig.value.rememberPassword = value;
 };

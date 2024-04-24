@@ -193,7 +193,7 @@ const handleSubmit = async ({
       setStorage('AuthToken', res.token, 60 * 1000)
 
       setStorage('userInfo', JSON.stringify(res))
-      userStore.updateUserInfo(res)
+      await userStore.updateUserInfo(res)
 
       const { headPic } = res
 
@@ -216,35 +216,14 @@ const handleSubmit = async ({
       Message.success('注册成功')
       setLoading(false)
 
-      if (!res.orgId) {
-        // 未关联企业
-        router.push('/tip/add-company')
-      } else {
-        router.push('/')
-      }
-
-      // 获取用户信息
-      // const userInfo: any = await accountInfo({})
-
-      // if (userInfo) {
-      //   setStorage('userInfo', JSON.stringify(userInfo))
-
-      //   Message.success('注册成功')
-      //   setLoading(false)
-
-      //   if (!userInfo.orgId) {
-      //     // 未关联企业
-      //     router.push('/tip/info')
-      //   } else if (userInfo.trial === 0) {
-      //     // 已过试用期
-      //     router.push('/tip/info')
-      //   } else {
-      //     router.push('/')
-      //   }
+      // if (!res.orgId) {
+      //   // 未关联企业
+      //   router.push('/tip/add-company')
       // } else {
-      //   setLoading(false)
+      //   router.push('/')
       // }
 
+      router.push('/')
 
     } catch (err) {
       errorMessage.value = (err as Error).message;

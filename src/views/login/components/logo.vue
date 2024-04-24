@@ -1,16 +1,14 @@
 <template>
   <div class="logo">
     <img alt="logo"
-      src="//p3-armor.byteimg.com/tos-cn-i-49unhts6dw/dfdba5317c0c20ce20e64fac803d52bc.svg~tplv-49unhts6dw-image.image" />
-    <div class="logo-text">AI Pro</div>
+      :src="Logo" style="width:120px;" />
+    <div class="logo-text"></div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
+import Logo from '@/assets/images/logo-white.png'
 
 </script>
 
