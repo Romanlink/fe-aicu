@@ -3,12 +3,12 @@
     <Breadcrumb :items="['预测分析']" />
 
     <Filter :loading="loading.filter" :regions="regions" :symbols="symbols" :forcastDate="forcastDate"
-      @regionChange="regionChange" @symbolChange="symbolChange" @nextPartChange="nextPartChange" />
+      @regionChange="regionChange" @symbolChange="symbolChange" @nextPartChange="nextPartChange"  />
 
     <Forcast :priceLoading="loading.price" :forcastLoading="loading.forcast" :symbol="filter.symbolName"
       :prices="prices" :forcast="forcastData" />
 
-    <Hot :newsLoading="loading.news" :news="news"  />
+    <Hot :newsLoading="loading.news" :news="news" :chartLoding="loading.newsChart" :chartData="chartData" @pageNoChange="pageNoChange" />
 
   </div>
 </template>
@@ -16,7 +16,7 @@
 <script lang="ts" setup>
 
 import { ref, onMounted } from 'vue';
-import { regionListApi, symbolListApi, symbolNewsApi, symbolPriceApi, symbolForecastApi } from '@/api/forecast'
+import { regionListApi, symbolListApi, symbolNewsApi, symbolPriceApi, symbolForecastApi, symbolNewsChartApi } from '@/api/forecast'
 
 import Filter from './components/filter.vue'
 import Forcast from './components/forcast.vue';
@@ -26,46 +26,62 @@ import moment from 'moment'
 
 const regions = ref<IRegion[]>([])
 const symbols = ref<ISymbol[]>([])
-const forcastDate = ref<string | undefined>()
+const forcastDate = ref<string | undefined>('')
 const loading = ref<{
   filter: boolean;
   price: boolean,
   news: boolean,
-  forcast: boolean
+  forcast: boolean,
+  newsChart: boolean
 }>({
   filter: false,
   price: false,
   news: false,
-  forcast: false
+  forcast: false,
+  newsChart: false
 })
 
-const filter = ref<{ regionId?: number; symbolId?: number; symbolName?: string; nextPart?: number }>({
-  nextPart: 1
+const filter = ref<{ regionId?: number; symbolId?: number; symbolName?: string; nextPart?: number, pageNo?: number, pageSize?: number }>({
+  nextPart: 1,
+  pageNo: 1,
+  pageSize: 10
 })
 
 const prices = ref<any>([])
 const news = ref<any>([])
 const forcastData = ref<string>('')
+const chartData = ref<any>({})
 
 // region change event
 const regionChange = (id: number) => {
   filter.value.regionId = id
-  fetchForecastData()
+  fetchData()
 }
 
 // symbol change event
 const symbolChange = (id: number, name: string) => {
   filter.value.symbolId = id
   filter.value.symbolName = name
-  fetchSymbolPrice()
-  fetchSymbolNews()
-  fetchForecastData()
+  fetchData()
 }
 
 // next part change event
 const nextPartChange = (nextPart: number) => {
   filter.value.nextPart = nextPart
+  fetchData()
+}
+
+// page no change event
+const pageNoChange = (pageNo: number) => {
+  filter.value.pageNo = pageNo
+  fetchSymbolNews()
+}
+
+const fetchData = () => {
+  fetchSymbolPrice()
   fetchForecastData()
+  fetchSymbolNews()
+  fetchNewsChart()
 }
 
 // 获取地区列表
@@ -97,7 +113,7 @@ const fetchSymbolPrice = async () => {
   loading.value.price = true
   const startTime = moment().subtract(1, 'months').format('YYYY-MM-DD HH:mm:ss')
   const endTime = moment().format('YYYY-MM-DD HH:mm:ss')
-  symbolPriceApi({ id: filter.value.symbolId, startTime, endTime }).then((res) => {
+  symbolPriceApi({ id: filter.value.symbolId, startTime, endTime, regionId: filter.value.regionId, nextPart: filter.value.nextPart }).then((res) => {
     console.log(res)
     prices.value = res || []
   }).finally(() => {
@@ -108,7 +124,8 @@ const fetchSymbolPrice = async () => {
 // 获取交易商品新闻信息
 const fetchSymbolNews = async () => {
   loading.value.news = true
-  symbolNewsApi({ id: filter.value.symbolId }).then((res:any) => {
+  const { pageNo, pageSize } = filter.value
+  symbolNewsApi({ id: filter.value.symbolId, regionId: filter.value.regionId, nextPart: filter.value.nextPart, pageNo, pageSize }).then((res: any) => {
     news.value = res || []
   }).finally(() => {
     loading.value.news = false
@@ -126,18 +143,27 @@ const fetchForecastData = async () => {
   })
 }
 
+// 获取交易商品⾏情信息
+const fetchNewsChart = async () => {
+  loading.value.newsChart = true
+  symbolNewsChartApi({ id: filter.value.symbolId, regionId: filter.value.regionId, nextPart: filter.value.nextPart }).then((res: any) => {
+    chartData.value = res || ''
+  }).finally(() => {
+    loading.value.newsChart = false
+  })
+}
+
 onMounted(async () => {
   loading.value.filter = true
   loading.value.news = true
   loading.value.price = true
   loading.value.forcast = true
+  loading.value.newsChart = true
   await fetchRegionList()
   await fetchSymbolList()
   loading.value.filter = false
 
-  fetchSymbolPrice()
-  fetchSymbolNews()
-  fetchForecastData()
+  fetchData()
 })
 
 

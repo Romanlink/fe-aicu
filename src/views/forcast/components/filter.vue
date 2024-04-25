@@ -56,7 +56,7 @@ const emit = defineEmits(['regionChange', 'symbolChange', 'nextPartChange']);
 const props = defineProps<{
   regions: IRegion[]
   symbols: ISymbol[]
-  forcastDate: string | null
+  forcastDate: string | undefined
   loading: boolean
 }>()
 

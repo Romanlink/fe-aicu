@@ -16,7 +16,7 @@ import { useChatStore, usePromptStore } from '@/store'
 import { fetchChatAPIProcess } from '@/api'
 import { t } from '@/locales'
 import { json } from 'stream/consumers'
-import { chatGus } from '@/api/chat'
+import { chatGus, getCurChatIdApi } from '@/api/chat'
 
 let controller = new AbortController()
 
@@ -69,14 +69,27 @@ function handleSubmitWithPrompt(question: string) {
 }
 
 /**
+ * 查询当前对话ID
+ */
+const getCurChatId = async () => {
+  const id = await getCurChatIdApi({})
+  return new Promise(resolve => {
+    resolve(id || '')
+  })
+}
+
+/**
  * 获取猜你想问
  * @param question 
  */
-const getQuestions = async () => {
+const getQuestions = async (chatId?: string | number) => {
   const data: any = await chatGus({
-    chatId: '',
+    chatId
   })
-  if (data) questions.value = data
+  questions.value = data || []
+  return new Promise(resolve => {
+    resolve(data || [])
+  })
 }
 
 async function onConversation(question?: string) {
@@ -195,6 +208,10 @@ async function onConversation(question?: string) {
     }
 
     await fetchChatAPIOnce()
+
+    const chatId: any = await getCurChatId()
+    const gusQuestions = await getQuestions(chatId)
+    updateChatSome(+uuid, dataSources.value.length - 1, { gusQuestions: gusQuestions || [] })
   }
   catch (error: any) {
     const errorMessage = error?.message ?? t('common.wrong')
@@ -338,6 +355,9 @@ async function onRegenerate(index: number) {
       updateChatSome(+uuid, index, { loading: false })
     }
     await fetchChatAPIOnce()
+    const chatId: any = await getCurChatId()
+    const gusQuestions = await getQuestions(chatId)
+    updateChatSome(+uuid, dataSources.value.length - 1, { gusQuestions: gusQuestions || [] })
   }
   catch (error: any) {
     if (error.message === 'canceled') {
@@ -543,8 +563,8 @@ onUnmounted(() => {
           <template v-else>
             <div>
               <Message v-for="(item, index) of dataSources" :key="index" :date-time="item.dateTime" :text="item.text"
-                :inversion="item.inversion" :error="item.error" :loading="item.loading"
-                @regenerate="onRegenerate(index)" @delete="handleDelete(index)" />
+                :inversion="item.inversion" :error="item.error" :loading="item.loading" :gusQuestions="item.gusQuestions"
+                @regenerate="onRegenerate(index)" @delete="handleDelete(index)" @onConversation="handleSubmitWithPrompt" />
               <div class="sticky bottom-0 left-0 flex justify-center">
                 <NButton v-if="loading" type="warning" @click="handleStop">
                   <template #icon>
@@ -559,9 +579,11 @@ onUnmounted(() => {
       </div>
     </main>
     <footer :class="footerClass">
-      <div class="w-full max-w-screen-xl mb-2 m-auto flex justify-center flex-wrap" v-if="questions && questions.length > 0 && !dataSources.length">
+      <div class="w-full max-w-screen-xl mb-2 m-auto flex justify-center flex-wrap"
+        v-if="questions && questions.length > 0 && !dataSources.length">
         <div>你可能想问:</div>
-        <a-tag v-for="(item, index) of questions" class="ml-3 cursor-pointer" :key="index" color="#36ad6a" @click="handleSubmitWithPrompt(item.question)">{{ item.question }}</a-tag>
+        <a-tag v-for="(item, index) of questions" class="ml-3 cursor-pointer" :key="index" color="#36ad6a"
+          @click="handleSubmitWithPrompt(item.question)">{{ item.question }}</a-tag>
       </div>
       <div class="w-full max-w-screen-xl m-auto">
         <div class="flex items-center justify-between space-x-2">

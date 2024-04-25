@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onMounted, onUnmounted, onUpdated, ref } from 'vue'
+import { computed, onMounted, onUnmounted, onUpdated, ref, defineEmits } from 'vue'
 import MarkdownIt from 'markdown-it'
 import mdKatex from '@traptitech/markdown-it-katex'
 import mila from 'markdown-it-link-attributes'
@@ -14,7 +14,10 @@ interface Props {
   text?: string
   loading?: boolean
   asRawText?: boolean
+  gusQuestions?: any
 }
+
+const emit = defineEmits(['onConversation'])
 
 const props = defineProps<Props>()
 
@@ -85,9 +88,14 @@ function removeCopyEvents() {
   if (textRef.value) {
     const copyBtn = textRef.value.querySelectorAll('.code-block-header__copy')
     copyBtn.forEach((btn) => {
-      btn.removeEventListener('click', () => {})
+      btn.removeEventListener('click', () => { })
     })
   }
+}
+
+function handleQuestion(propt: string | undefined) {
+  if(!propt) return
+  emit('onConversation', propt)
 }
 
 onMounted(() => {
@@ -109,6 +117,19 @@ onUnmounted(() => {
       <div v-if="!inversion">
         <div v-if="!asRawText" class="markdown-body" :class="{ 'markdown-body-generate': loading }" v-html="text" />
         <div v-else class="whitespace-pre-wrap" v-text="text" />
+
+        <div v-if="!loading && gusQuestions && gusQuestions.length" class="flex flex-col my-3">
+          <div class="flex items-center mb-3">
+            <icon-bulb class="mr-2" />
+            <div class="mr-2">猜你想问</div>
+            <div class="h-[1px] flex-1 bg-gray-200"></div>
+          </div>
+          <div class="flex flex-wrap">
+            <div v-for="(item, index) of gusQuestions" :key="index"
+              class="py-1 px-3 cursor-pointer border border-gray-300 rounded ml-3" @click="handleQuestion(item.question)">{{ item.question }}</div>
+          </div>
+        </div>
+
       </div>
       <div v-else class="whitespace-pre-wrap" v-text="text" />
     </div>

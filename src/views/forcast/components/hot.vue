@@ -21,13 +21,15 @@
               </div>
             </div>
             <div class="page">
-              <a-pagination :total="total" />
+              <a-pagination :total="total" :page-size="10" @change="onPageChange" />
             </div>
           </a-spin>
         </a-card>
       </a-col>
       <a-col :sm="24" :lg="8" :xl="8" :xxl="8">
-        <v-chart class="chart" :option="option" autoresize />
+        <a-spin :loading="chartLoding" style="width: 100%">
+          <v-chart class="chart" :option="option" autoresize />
+        </a-spin>
       </a-col>
 
     </a-row>
@@ -46,22 +48,30 @@ import {
   LegendComponent
 } from "echarts/components";
 import VChart from "vue-echarts";
-import { ref, watch } from "vue";
+import { ref, watch, defineEmits } from "vue";
 import moment from 'moment'
-
 
 const props = defineProps<{
   newsLoading: boolean
   news: any
+  chartLoding: boolean
+  chartData: any
 }>()
+
+const emit = defineEmits(['pageNoChange']);
 
 const total = ref<number>(0)
 
 watch(() => props.news, (val) => {
-  total.value = props.news.data.length || 0
+  total.value = props.news.total || 0
+})
+
+watch(() => props.chartData, (val) => {
+  setOption()
 })
 
 
+let option = ref({})
 
 use([
   CanvasRenderer,
@@ -71,37 +81,45 @@ use([
   LegendComponent
 ]);
 
-const option = ref({
-  title: {
-    text: "市场情绪",
-    left: "left"
-  },
-  tooltip: {
-    trigger: "item",
-    formatter: "{a} <br/>{b} : {c} ({d}%)"
-  },
-  series: [
-    {
-      name: 'Access From',
-      type: 'pie',
-      radius: '50%',
-      data: [
-        { value: 1048, name: 'Search Engine' },
-        { value: 735, name: 'Direct' },
-        { value: 580, name: 'Email' },
-        { value: 484, name: 'Union Ads' },
-        { value: 300, name: 'Video Ads' }
-      ],
-      emphasis: {
-        itemStyle: {
-          shadowBlur: 10,
-          shadowOffsetX: 0,
-          shadowColor: 'rgba(0, 0, 0, 0.5)'
+const setOption = () => {
+
+  const { upCount, neutralCount, downCount } = props.chartData
+
+  option.value = {
+    title: {
+      text: "市场情绪",
+      left: "left"
+    },
+    tooltip: {
+      trigger: "item",
+      formatter: "{a} <br/>{b} : {c} ({d}%)"
+    },
+    series: [
+      {
+        name: '市场情绪',
+        type: 'pie',
+        radius: '50%',
+        data: [
+          { value: neutralCount || 0, name: '中立' },
+          { value: upCount || 0, name: '正面' },
+          { value: downCount || 0, name: '负面' },
+        ],
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
         }
       }
-    }
-  ]
-});
+    ]
+  }
+}
+
+const onPageChange = (val: number) => {
+  emit('pageNoChange', val)
+}
+
 
 
 

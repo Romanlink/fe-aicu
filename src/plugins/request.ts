@@ -44,7 +44,8 @@ myAxios.interceptors.response.use(
             if (response.data.data) {
                 return Promise.resolve(response.data.data)
             } else {
-                return Promise.resolve(response.data)
+                // return Promise.resolve(response.data)
+                return Promise.resolve('')
             }
         } else if (response.data.code == 'MUC100001' && response.data.message.indexOf('当前公司已注册') > -1) {
             return Promise.resolve(response.data)
