@@ -93,7 +93,7 @@ const formData = reactive<IForms>({
 
 // password validate
 const passwordValidate = (value: any, callback: any) => {
-  const regex = /^[A-Za-z0-9]+$/
+  const regex = /^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,18}$/
   if (value && !regex.test(value)) {
     callback('6-18位密码，字母数字组合')
   }
