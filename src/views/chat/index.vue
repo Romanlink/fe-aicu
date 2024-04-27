@@ -16,7 +16,7 @@ import { useChatStore, usePromptStore } from '@/store'
 import { fetchChatAPIProcess } from '@/api'
 import { t } from '@/locales'
 import { json } from 'stream/consumers'
-import { chatGus, getCurChatIdApi } from '@/api/chat'
+import { chatGus, getCurChatIdApi, getChatListApi } from '@/api/chat'
 
 let controller = new AbortController()
 
@@ -29,7 +29,7 @@ const ms = useMessage()
 const chatStore = useChatStore()
 
 const { isMobile } = useBasicLayout()
-const { addChat, updateChat, updateChatSome, getChatByUuidAndIndex } = useChat()
+const { addChat, updateChat, updateChatSome, getChatByUuidAndIndex, updateChatSomeByChatId } = useChat()
 const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
 const { usingContext, toggleUsingContext } = useUsingContext()
 
@@ -75,6 +75,17 @@ const getCurChatId = async () => {
   const id = await getCurChatIdApi({})
   return new Promise(resolve => {
     resolve(id || '')
+  })
+}
+
+/**
+ * 查询对话列表
+ */
+ const getChatList = async () => {
+  const chats = await getChatListApi({})
+  console.log(chats)
+  return new Promise(resolve => {
+    resolve(chats || '')
   })
 }
 
@@ -208,10 +219,12 @@ async function onConversation(question?: string) {
     }
 
     await fetchChatAPIOnce()
-
     const chatId: any = await getCurChatId()
+    loading.value = false
+    updateChatSome(+uuid, dataSources.value.length - 1, { chatId: chatId || '' })
     const gusQuestions = await getQuestions(chatId)
-    updateChatSome(+uuid, dataSources.value.length - 1, { gusQuestions: gusQuestions || [] })
+    updateChatSomeByChatId(+uuid, chatId, { gusQuestions: gusQuestions || [] })
+    scrollToBottomIfAtBottom()
   }
   catch (error: any) {
     const errorMessage = error?.message ?? t('common.wrong')
@@ -355,9 +368,11 @@ async function onRegenerate(index: number) {
       updateChatSome(+uuid, index, { loading: false })
     }
     await fetchChatAPIOnce()
-    const chatId: any = await getCurChatId()
-    const gusQuestions = await getQuestions(chatId)
-    updateChatSome(+uuid, dataSources.value.length - 1, { gusQuestions: gusQuestions || [] })
+
+    // updateChatSome(+uuid, dataSources.value.length - 1, { chatId: requestOptions.chatId || '' })
+    // const gusQuestions = await getQuestions(requestOptions.chatId)
+    // updateChatSomeByChatId(+uuid, requestOptions.chatId, { gusQuestions: gusQuestions || [] })
+    // scrollToBottomIfAtBottom()
   }
   catch (error: any) {
     if (error.message === 'canceled') {
@@ -532,6 +547,7 @@ const footerClass = computed(() => {
 onMounted(() => {
   getQuestions()
   scrollToBottom()
+  getChatList()
   if (inputRef.value && !isMobile.value)
     inputRef.value?.focus()
 })
@@ -563,8 +579,9 @@ onUnmounted(() => {
           <template v-else>
             <div>
               <Message v-for="(item, index) of dataSources" :key="index" :date-time="item.dateTime" :text="item.text"
-                :inversion="item.inversion" :error="item.error" :loading="item.loading" :gusQuestions="item.gusQuestions"
-                @regenerate="onRegenerate(index)" @delete="handleDelete(index)" @onConversation="handleSubmitWithPrompt" />
+                :inversion="item.inversion" :error="item.error" :loading="item.loading"
+                :gusQuestions="item.gusQuestions" @regenerate="onRegenerate(index)" @delete="handleDelete(index)"
+                @onConversation="handleSubmitWithPrompt" />
               <div class="sticky bottom-0 left-0 flex justify-center">
                 <NButton v-if="loading" type="warning" @click="handleStop">
                   <template #icon>

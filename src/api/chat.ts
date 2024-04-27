@@ -17,3 +17,12 @@ export function chatGus(params: any) {
 export function getCurChatIdApi(params: any) {
     return post('/account/cur-chat', params)
 } 
+
+/**
+ * 查询对话列表
+ * @param params 
+ * @returns 
+ */
+export function getChatListApi(params: any) {
+    return post('/chat/list', params)
+} 

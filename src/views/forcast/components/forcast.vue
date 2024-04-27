@@ -75,7 +75,7 @@ const setOption = () => {
     },
     tooltip: {
       trigger: "item",
-      formatter: "{a} <br/>{b} : {c} ({d}%)"
+      formatter: "{b} : {c}"
     },
     color: ['#165dff'],
     // legend: {

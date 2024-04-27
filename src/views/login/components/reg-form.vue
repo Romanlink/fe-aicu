@@ -36,12 +36,12 @@
         </a-input-password>
       </a-form-item>
       <a-space :size="16" direction="vertical">
-        <div class="login-form-password-actions">
+        <!-- <div class="login-form-password-actions">
           <a-checkbox :checked="true" :model-value="isAgree" @change="setIsAgree as any">
             勾选并同意
           </a-checkbox>
           <a-link href="https://www.baidu.com" target="_blank">《用户服务协议》</a-link>
-        </div>
+        </div> -->
         <a-button type="primary" html-type="submit" long :loading="loading">
           注册
         </a-button>
@@ -168,10 +168,10 @@ const handleSubmit = async ({
   errors: Record<string, ValidatedError> | undefined;
   values: Record<string, any>;
 }) => {
-  if (!isAgree.value) {
-    Message.warning('请阅读并同意用户协议')
-    return
-  }
+  // if (!isAgree.value) {
+  //   Message.warning('请阅读并同意用户协议')
+  //   return
+  // }
   if (loading.value) return;
   if (!errors) {
     setLoading(true);
@@ -195,23 +195,23 @@ const handleSubmit = async ({
       setStorage('userInfo', JSON.stringify(res))
       await userStore.updateUserInfo(res)
 
-      const { headPic } = res
+      // const { headPic } = res
 
-      // 下载头像
-      if (headPic) {
-        const imageData: any = await imageViewApi({ imageKey: headPic })
+      // // 下载头像
+      // if (headPic) {
+      //   const imageData: any = await imageViewApi({ imageKey: headPic })
 
-        if (imageData && imageData.image) {
-          const headPicUrl = 'data:image/jpeg;base64,' + imageData.image
-          userStore.updateUserInfo({
-            headPicUrl
-          })
-        }
-      } else {
-        userStore.updateUserInfo({
-          headPicUrl: ''
-        })
-      }
+      //   if (imageData && imageData.image) {
+      //     const headPicUrl = 'data:image/jpeg;base64,' + imageData.image
+      //     userStore.updateUserInfo({
+      //       headPicUrl
+      //     })
+      //   }
+      // } else {
+      //   userStore.updateUserInfo({
+      //     headPicUrl: ''
+      //   })
+      // }
 
       Message.success('注册成功')
       setLoading(false)

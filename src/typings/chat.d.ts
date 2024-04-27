@@ -8,7 +8,8 @@ declare namespace Chat {
 		loading?: boolean
 		conversationOptions?: ConversationRequest | null
 		requestOptions: { prompt: string; options?: ConversationRequest | null }
-		gusQuestions?: any
+		gusQuestions?: any,
+		chatId?: any
 	}
 
 	interface History {

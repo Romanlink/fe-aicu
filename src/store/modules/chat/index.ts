@@ -135,6 +135,8 @@ export const useChatStore = defineStore('chat-store', {
       }
     },
 
+    
+
     updateChatSomeByUuid(uuid: number, index: number, chat: Partial<Chat.Chat>) {
       if (!uuid || uuid === 0) {
         if (this.chat.length) {
@@ -147,6 +149,19 @@ export const useChatStore = defineStore('chat-store', {
       const chatIndex = this.chat.findIndex(item => item.uuid === uuid)
       if (chatIndex !== -1) {
         this.chat[chatIndex].data[index] = { ...this.chat[chatIndex].data[index], ...chat }
+        this.recordState()
+      }
+    },
+
+    updateChatSomeByChatId(uuid: number, chatId: number, chat: Partial<Chat.Chat>) {
+      if (!chatId) {
+        return
+      }
+
+      const chatIndex = this.chat.findIndex(item => item.uuid === uuid)
+      const dataIndex = this.chat[chatIndex].data.findIndex(item => item.chatId == chatId)
+      if (chatIndex !== -1) {
+        this.chat[chatIndex].data[dataIndex] = { ...this.chat[chatIndex].data[dataIndex], ...chat }
         this.recordState()
       }
     },

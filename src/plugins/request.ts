@@ -58,6 +58,9 @@ myAxios.interceptors.response.use(
         }
     },
     (error) => {
+        if (error.request.responseURL.indexOf('/chat/gus') > -1) {
+            return
+        }
         if (error.response && error.response.data.code == 'MUC100001' && error.response.data.message.indexOf('当前公司已注册') > -1) {
             return Promise.resolve(error.response.data)
         } else if (error.response) {

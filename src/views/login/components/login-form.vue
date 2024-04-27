@@ -147,23 +147,23 @@ const handleLoginSuccess = async (userInfo: any) => {
   setStorage('userInfo', JSON.stringify(userInfo))
   userStore.updateUserInfo(userInfo)
 
-  const { headPic } = userInfo
+  // const { headPic } = userInfo
 
-  // 下载头像
-  if (headPic) {
-    const imageData: any = await imageViewApi({ imageKey: headPic })
+  // // 下载头像
+  // if (headPic) {
+  //   const imageData: any = await imageViewApi({ imageKey: headPic })
 
-    if (imageData && imageData.image) {
-      const headPicUrl = 'data:image/jpeg;base64,' + imageData.image
-      userStore.updateUserInfo({
-        headPicUrl
-      })
-    }
-  } else {
-    userStore.updateUserInfo({
-      headPicUrl: ''
-    })
-  }
+  //   if (imageData && imageData.image) {
+  //     const headPicUrl = 'data:image/jpeg;base64,' + imageData.image
+  //     userStore.updateUserInfo({
+  //       headPicUrl
+  //     })
+  //   }
+  // } else {
+  //   userStore.updateUserInfo({
+  //     headPicUrl: ''
+  //   })
+  // }
 
   Message.success('登录成功')
   setLoading(false)

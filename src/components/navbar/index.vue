@@ -2,8 +2,7 @@
   <div class="navbar">
     <div class="left-side">
       <a-space>
-        <img alt="logo"
-          :src="Logo" style="height:30px;" />
+        <img alt="logo" :src="Logo" style="height:30px;" />
         <!-- <a-typography-title :style="{ margin: 0, fontSize: '18px' }" :heading="5">
           AI Pro
         </a-typography-title> -->
@@ -103,6 +102,8 @@ import defaultAvatar from '@/assets/avatar.jpg'
 import { useUserStore } from '@/store';
 import { Notification } from '@arco-design/web-vue';
 import Logo from '@/assets/images/logo.png'
+import { imageViewApi } from '@/api/common'
+
 
 const userStore = useUserStore();
 const userInfo = computed(() => userStore.userInfo)
@@ -116,8 +117,33 @@ const encryptPhoneNumber = (phoneNumber: string) => {
   return phoneNumber.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
 }
 
-onMounted(() => {
+// 下载头像
+const downloadHeadPic = async () => {
+  const { headPic, headPicUrl } = userInfo.value
+  if (headPic && !headPicUrl) {
+    const imageData: any = await imageViewApi({ imageKey: headPic })
 
+    if (imageData && imageData.image) {
+      const headPicUrl = 'data:image/jpeg;base64,' + imageData.image
+      userStore.updateUserInfo({
+        headPicUrl
+      })
+    }
+  } else if (headPic && headPicUrl) {
+    userStore.updateUserInfo({
+      headPicUrl: headPicUrl
+    })
+  } else {
+    {
+      userStore.updateUserInfo({
+        headPicUrl: ''
+      })
+    }
+  }
+}
+
+onMounted(() => {
+  downloadHeadPic()
   const { status } = userInfo.value
   if (status !== 1) {
     Notification.clear()
