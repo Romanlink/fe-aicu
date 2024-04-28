@@ -46,11 +46,11 @@ const options = computed(() => {
       key: 'copyText',
       icon: iconRender({ icon: 'ri:file-copy-2-line' }),
     },
-    {
-      label: t('common.delete'),
-      key: 'delete',
-      icon: iconRender({ icon: 'ri:delete-bin-line' }),
-    },
+    // {
+    //   label: t('common.delete'),
+    //   key: 'delete',
+    //   icon: iconRender({ icon: 'ri:delete-bin-line' }),
+    // },
   ]
 
   if (!props.inversion) {

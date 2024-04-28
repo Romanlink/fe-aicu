@@ -8,19 +8,30 @@ import { useAppStore, useChatStore } from '@/store'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { PromptStore, SvgIcon } from '@/components/common'
 import { t } from '@/locales'
+import { chatCreateApi } from '@/api/chat'
 
 const appStore = useAppStore()
 const chatStore = useChatStore()
 
+const loading = ref<boolean>(false)
+
 const dialog = useDialog()
+
+const listRef = ref(null)
 
 const { isMobile } = useBasicLayout()
 const show = ref(false)
 
 const collapsed = computed(() => appStore.siderCollapsed)
 
-function handleAdd() {
-  chatStore.addHistory({ title: t('chat.newChatTitle'), uuid: Date.now(), isEdit: false })
+async function handleAdd() {
+  loading.value = true
+  const data = await chatCreateApi({ title: '新建聊天' })
+  loading.value = false
+  // chatStore.addHistory({ title: t('chat.newChatTitle'), uuid: Date.now(), isEdit: false })
+  if (data) {
+    listRef.value.handleAdd(data)
+  }
   if (isMobile.value)
     appStore.setSiderCollapsed(true)
 }
@@ -75,26 +86,20 @@ watch(
 </script>
 
 <template>
-  <NLayoutSider
-    :collapsed="collapsed"
-    :collapsed-width="0"
-    :width="260"
-    :show-trigger="isMobile ? false : 'arrow-circle'"
-    collapse-mode="transform"
-    position="absolute"
-    bordered
-    :style="getMobileClass"
-    @update-collapsed="handleUpdateCollapsed"
-  >
+  <NLayoutSider :collapsed="collapsed" :collapsed-width="0" :width="260"
+    :show-trigger="isMobile ? false : 'arrow-circle'" collapse-mode="transform" position="absolute" bordered
+    :style="getMobileClass" @update-collapsed="handleUpdateCollapsed">
     <div class="flex flex-col h-full" :style="mobileSafeArea">
       <main class="flex flex-col flex-1 min-h-0">
         <div class="p-4">
-          <NButton dashed block @click="handleAdd">
-            {{ $t('chat.newChatButton') }}
-          </NButton>
+          <a-spin :loading="loading" style="width:100%;height:100%">
+            <NButton dashed block @click="handleAdd">
+              {{ $t('chat.newChatButton') }}
+            </NButton>
+          </a-spin>
         </div>
         <div class="flex-1 min-h-0 pb-4 overflow-hidden">
-          <List />
+          <List ref="listRef" />
         </div>
         <!-- <div class="flex items-center p-4 space-x-4">
           <div class="flex-1">

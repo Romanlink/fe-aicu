@@ -24,6 +24,22 @@ export const useChatStore = defineStore('chat-store', {
   },
 
   actions: {
+    setNewChat(newChat: any) {
+      this.newChat = newChat
+      this.recordState()
+    },
+    setNewChatId(id: any) {
+      this.newChatId = id
+      this.recordState()
+    },
+    setDelAll(date: any) {
+      this.delAll = date
+      this.recordState()
+    },
+    setNewMenu(date: any) {
+      this.newMenu = date
+      this.recordState()
+    },
     setUsingContext(context: boolean) {
       this.usingContext = context
       this.recordState()
@@ -36,7 +52,7 @@ export const useChatStore = defineStore('chat-store', {
       this.reloadRoute(history.uuid)
     },
 
-    updateHistory(uuid: number, edit: Partial<Chat.History>) {
+    updateHistory(uuid: number | null, edit: Partial<Chat.History>) {
       const index = this.history.findIndex(item => item.uuid === uuid)
       if (index !== -1) {
         this.history[index] = { ...this.history[index], ...edit }
@@ -76,7 +92,7 @@ export const useChatStore = defineStore('chat-store', {
       }
     },
 
-    async setActive(uuid: number) {
+    async setActive(uuid: number | null) {
       this.active = uuid
       return await this.reloadRoute(uuid)
     },
@@ -135,7 +151,7 @@ export const useChatStore = defineStore('chat-store', {
       }
     },
 
-    
+
 
     updateChatSomeByUuid(uuid: number, index: number, chat: Partial<Chat.Chat>) {
       if (!uuid || uuid === 0) {
@@ -203,7 +219,7 @@ export const useChatStore = defineStore('chat-store', {
       this.recordState()
     },
 
-    async reloadRoute(uuid?: number) {
+    async reloadRoute(uuid?: number | null) {
       this.recordState()
       await router.push({ name: 'Chat', params: { uuid } })
     },

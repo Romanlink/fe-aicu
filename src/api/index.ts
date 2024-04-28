@@ -22,6 +22,7 @@ export function fetchChatConfig<T = any>() {
 
 export function fetchChatAPIProcess<T = any>(
   params: {
+    chatId: any
     prompt: string
     options?: { conversationId?: string; parentMessageId?: string }
     signal?: GenericAbortSignal
@@ -47,6 +48,7 @@ export function fetchChatAPIProcess<T = any>(
 
   const postData = {
     question: data.prompt,
+    chatId: params.chatId
     // stream: true
   }
 

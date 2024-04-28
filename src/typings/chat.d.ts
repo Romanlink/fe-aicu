@@ -15,14 +15,18 @@ declare namespace Chat {
 	interface History {
 		title: string
 		isEdit: boolean
-		uuid: number
+		uuid: any
 	}
 
 	interface ChatState {
-		active: number | null
+		newChat?: any,
+		newChatId?: any,
+		delAll?: any,
+		newMenu?: any,
+		active: any
 		usingContext: boolean;
 		history: History[]
-		chat: { uuid: number; data: Chat[] }[]
+		chat: { uuid: any | null; data: Chat[] }[]
 	}
 
 	interface ConversationRequest {
@@ -44,5 +48,6 @@ declare namespace Chat {
 		parentMessageId: string
 		role: string
 		text: string
+		chatId: any
 	}
 }

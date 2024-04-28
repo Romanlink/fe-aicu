@@ -1,6 +1,6 @@
 <script setup lang='ts'>
 import type { Ref } from 'vue'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { NAutoComplete, NButton, NInput, useDialog, useMessage } from 'naive-ui'
@@ -16,9 +16,12 @@ import { useChatStore, usePromptStore } from '@/store'
 import { fetchChatAPIProcess } from '@/api'
 import { t } from '@/locales'
 import { json } from 'stream/consumers'
-import { chatGus, getCurChatIdApi, getChatListApi } from '@/api/chat'
+import { chatGus, getCurChatIdApi, getChatDetailApi, chatEditApi } from '@/api/chat'
+import moment from 'moment'
 
 let controller = new AbortController()
+
+let chatIdRecord = ref('')
 
 const openLongReply = import.meta.env.VITE_GLOB_OPEN_LONG_REPLY === 'true'
 
@@ -33,9 +36,11 @@ const { addChat, updateChat, updateChatSome, getChatByUuidAndIndex, updateChatSo
 const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
 const { usingContext, toggleUsingContext } = useUsingContext()
 
-const { uuid } = route.params as { uuid: string }
+let { uuid } = route.params as { uuid: string }
 
-const dataSources = computed(() => chatStore.getChatByUuid(+uuid))
+// const dataSources = computed(() => chatStore.getChatByUuid(+uuid))
+const pageLoading = ref<boolean>(false)
+const dataSources = ref<any[]>([])
 const conversationList = computed(() => dataSources.value.filter(item => (!item.inversion && !!item.conversationOptions)))
 
 const prompt = ref<string>('')
@@ -73,6 +78,7 @@ function handleSubmitWithPrompt(question: string) {
  */
 const getCurChatId = async () => {
   const id = await getCurChatIdApi({})
+
   return new Promise(resolve => {
     resolve(id || '')
   })
@@ -81,12 +87,35 @@ const getCurChatId = async () => {
 /**
  * 查询对话列表
  */
- const getChatList = async () => {
-  const chats = await getChatListApi({})
-  console.log(chats)
-  return new Promise(resolve => {
-    resolve(chats || '')
+const getChatList = async (uuid: any) => {
+  pageLoading.value = true
+  const chats: any = await getChatDetailApi({ chatId: uuid })
+
+  const { contentDtoList } = chats
+
+  contentDtoList.reverse()
+
+  dataSources.value = contentDtoList.map((item: any, index: number) => {
+    return {
+      dateTime: moment(item.createTime).format('YYYY-MM-DD HH:mm:ss'),
+      text: item.content,
+      inversion: item.type == 1 ? true : false,
+      error: false,
+      conversationOptions: null,
+      requestOptions: { prompt: item.type == 1 ? item.content : contentDtoList[index - 1].content, options: null },
+    }
   })
+
+  scrollToBottom()
+  pageLoading.value = false
+
+  if (!contentDtoList.length) {
+    getQuestions()
+  }
+
+  // return new Promise(resolve => {
+  //   resolve(chats || '')
+  // })
 }
 
 /**
@@ -109,6 +138,11 @@ async function onConversation(question?: string) {
 
   let message = question || prompt.value
 
+  if (uuid && chatStore.active && dataSources.value.length == 0) {
+    chatEditApi({ chatId: uuid, title: message })
+    chatStore.setNewMenu(uuid + '_' + message)
+  }
+
   if (loading.value)
     return
 
@@ -117,18 +151,34 @@ async function onConversation(question?: string) {
 
   controller = new AbortController()
 
-  addChat(
-    +uuid,
-    {
-      dateTime: new Date().toLocaleString(),
-      text: message,
-      inversion: true,
-      error: false,
-      conversationOptions: null,
-      requestOptions: { prompt: message, options: null },
-    },
-  )
+  // addChat(
+  //   +uuid,
+  //   {
+  //     dateTime: new Date().toLocaleString(),
+  //     text: message,
+  //     inversion: true,
+  //     error: false,
+  //     conversationOptions: null,
+  //     requestOptions: { prompt: message, options: null },
+  //   },
+  // )
+
+  dataSources.value.splice(dataSources.value.length, 0, {
+    dateTime: new Date().toLocaleString(),
+    text: message,
+    inversion: true,
+    error: false,
+    conversationOptions: null,
+    requestOptions: { prompt: message, options: null },
+  })
+
   scrollToBottom()
+
+
+  if (!chatStore.active && !uuid && !chatIdRecord.value) {
+    localStorage.newChat = message
+    chatStore.setNewChat(new Date())
+  }
 
   loading.value = true
   prompt.value = ''
@@ -139,24 +189,34 @@ async function onConversation(question?: string) {
   if (lastContext && usingContext.value)
     options = { ...lastContext }
 
-  addChat(
-    +uuid,
-    {
-      dateTime: new Date().toLocaleString(),
-      text: t('chat.thinking'),
-      loading: true,
-      inversion: false,
-      error: false,
-      conversationOptions: null,
-      requestOptions: { prompt: message, options: { ...options } },
-    },
-  )
+  // addChat(
+  //   +uuid,
+  //   {
+  //     dateTime: new Date().toLocaleString(),
+  //     text: t('chat.thinking'),
+  //     loading: true,
+  //     inversion: false,
+  //     error: false,
+  //     conversationOptions: null,
+  //     requestOptions: { prompt: message, options: { ...options } },
+  //   },
+  // )
+  dataSources.value.splice(dataSources.value.length, 0, {
+    dateTime: new Date().toLocaleString(),
+    text: t('chat.thinking'),
+    loading: true,
+    inversion: false,
+    error: false,
+    conversationOptions: null,
+    requestOptions: { prompt: message, options: { ...options } },
+  })
   scrollToBottom()
 
   try {
     let lastText = ''
     const fetchChatAPIOnce = async () => {
       await fetchChatAPIProcess<Chat.ConversationResponse>({
+        chatId: uuid || chatIdRecord.value,
         prompt: message,
         options,
         signal: controller.signal,
@@ -186,20 +246,29 @@ async function onConversation(question?: string) {
             // const data = JSON.parse(chunk)
             const data = responseArr[responseArr.length - 1]
 
-            updateChat(
-              +uuid,
-              dataSources.value.length - 1,
-              {
-                dateTime: new Date().toLocaleString(),
-                // text: lastText + (data.text ?? ''),
-                text: resText,
-                inversion: false,
-                error: false,
-                loading: true,
-                conversationOptions: { conversationId: data.conversationId, parentMessageId: data.id },
-                requestOptions: { prompt: message, options: { ...options } },
-              },
-            )
+            // updateChat(
+            //   +uuid,
+            //   dataSources.value.length - 1,
+            //   {
+            //     dateTime: new Date().toLocaleString(),
+            //     // text: lastText + (data.text ?? ''),
+            //     text: resText,
+            //     inversion: false,
+            //     error: false,
+            //     loading: true,
+            //     conversationOptions: { conversationId: data.conversationId, parentMessageId: data.id },
+            //     requestOptions: { prompt: message, options: { ...options } },
+            //   },
+            // )
+            dataSources.value[dataSources.value.length - 1] = {
+              dateTime: new Date().toLocaleString(),
+              text: resText,
+              loading: true,
+              inversion: false,
+              error: false,
+              conversationOptions: null,
+              requestOptions: { prompt: message, options: { ...options } },
+            }
 
             if (openLongReply && data.detail.choices[0].finish_reason === 'length') {
               options.parentMessageId = data.id
@@ -215,61 +284,81 @@ async function onConversation(question?: string) {
           }
         },
       })
-      updateChatSome(+uuid, dataSources.value.length - 1, { loading: false })
+      // updateChatSome(+uuid, dataSources.value.length - 1, { loading: false })
+      dataSources.value[dataSources.value.length - 1] = {
+        ...dataSources.value[dataSources.value.length - 1], ...{ loading: false }
+      }
     }
 
     await fetchChatAPIOnce()
-    const chatId: any = await getCurChatId()
+    let chatId: any = ''
+
+    if (!chatStore.active && !uuid && !chatIdRecord.value) {
+      chatId = await getCurChatId()
+      // chatStore.setActive(chatId)
+      chatIdRecord.value = chatId
+      console.log(chatId)
+      chatStore.setNewChatId(chatId)
+    }
+
     loading.value = false
-    updateChatSome(+uuid, dataSources.value.length - 1, { chatId: chatId || '' })
-    const gusQuestions = await getQuestions(chatId)
-    updateChatSomeByChatId(+uuid, chatId, { gusQuestions: gusQuestions || [] })
+
+    // updateChatSome(+uuid, dataSources.value.length - 1, { chatId: uuid || '' })
+    const gusQuestions = await getQuestions(uuid || chatIdRecord.value)
+    // updateChatSomeByChatId(+uuid, uuid, { gusQuestions: gusQuestions || [] })
+    // dataSources.value[dataSources.value.length - 1] = {
+    //   ...dataSources.value[dataSources.value.length - 1], ...{ gusQuestions: gusQuestions || [] }
+    // }
+    dataSources.value[dataSources.value.length - 1].gusQuestions = gusQuestions || []
     scrollToBottomIfAtBottom()
   }
   catch (error: any) {
     const errorMessage = error?.message ?? t('common.wrong')
 
     if (error.message === 'canceled') {
-      updateChatSome(
-        +uuid,
-        dataSources.value.length - 1,
-        {
-          loading: false,
-        },
-      )
+      // updateChatSome(
+      //   +uuid,
+      //   dataSources.value.length - 1,
+      //   {
+      //     loading: false,
+      //   },
+      // )
+      dataSources.value[dataSources.value.length - 1] = {
+        ...dataSources.value[dataSources.value.length - 1], ...{ loading: false }
+      }
       scrollToBottomIfAtBottom()
       return
     }
 
-    const currentChat = getChatByUuidAndIndex(+uuid, dataSources.value.length - 1)
+    // const currentChat = getChatByUuidAndIndex(+uuid, dataSources.value.length - 1)
 
-    if (currentChat?.text && currentChat.text !== '') {
-      updateChatSome(
-        +uuid,
-        dataSources.value.length - 1,
-        {
-          text: `${currentChat.text}\n[${errorMessage}]`,
-          error: false,
-          loading: false,
-        },
-      )
-      return
-    }
+    // if (currentChat?.text && currentChat.text !== '') {
+    //   updateChatSome(
+    //     +uuid,
+    //     dataSources.value.length - 1,
+    //     {
+    //       text: `${currentChat.text}\n[${errorMessage}]`,
+    //       error: false,
+    //       loading: false,
+    //     },
+    //   )
+    //   return
+    // }
 
-    updateChat(
-      +uuid,
-      dataSources.value.length - 1,
-      {
-        dateTime: new Date().toLocaleString(),
-        text: errorMessage,
-        inversion: false,
-        error: true,
-        loading: false,
-        conversationOptions: null,
-        requestOptions: { prompt: message, options: { ...options } },
-      },
-    )
-    scrollToBottomIfAtBottom()
+    // updateChat(
+    //   +uuid,
+    //   dataSources.value.length - 1,
+    //   {
+    //     dateTime: new Date().toLocaleString(),
+    //     text: errorMessage,
+    //     inversion: false,
+    //     error: true,
+    //     loading: false,
+    //     conversationOptions: null,
+    //     requestOptions: { prompt: message, options: { ...options } },
+    //   },
+    // )
+    // scrollToBottomIfAtBottom()
   }
   finally {
     loading.value = false
@@ -293,24 +382,34 @@ async function onRegenerate(index: number) {
 
   loading.value = true
 
-  updateChat(
-    +uuid,
-    index,
-    {
-      dateTime: new Date().toLocaleString(),
-      text: '',
-      inversion: false,
-      error: false,
-      loading: true,
-      conversationOptions: null,
-      requestOptions: { prompt: message, options: { ...options } },
-    },
-  )
+  // updateChat(
+  //   +uuid,
+  //   index,
+  //   {
+  //     dateTime: new Date().toLocaleString(),
+  //     text: '',
+  //     inversion: false,
+  //     error: false,
+  //     loading: true,
+  //     conversationOptions: null,
+  //     requestOptions: { prompt: message, options: { ...options } },
+  //   },
+  // )
+  dataSources.value[index] = {
+    dateTime: new Date().toLocaleString(),
+    text: '',
+    inversion: false,
+    error: false,
+    loading: true,
+    conversationOptions: null,
+    requestOptions: { prompt: message, options: null },
+  }
 
   try {
     let lastText = ''
     const fetchChatAPIOnce = async () => {
       await fetchChatAPIProcess<Chat.ConversationResponse>({
+        chatId: uuid,
         prompt: message,
         options,
         signal: controller.signal,
@@ -338,20 +437,30 @@ async function onRegenerate(index: number) {
           try {
             // const data = JSON.parse(chunk)
             const data = responseArr[responseArr.length - 1]
-            updateChat(
-              +uuid,
-              index,
-              {
-                dateTime: new Date().toLocaleString(),
-                // text: lastText + (data.text ?? ''),
-                text: resText,
-                inversion: false,
-                error: false,
-                loading: true,
-                conversationOptions: { conversationId: data.conversationId, parentMessageId: data.id },
-                requestOptions: { prompt: message, options: { ...options } },
-              },
-            )
+            // updateChat(
+            //   +uuid,
+            //   index,
+            //   {
+            //     dateTime: new Date().toLocaleString(),
+            //     // text: lastText + (data.text ?? ''),
+            //     text: resText,
+            //     inversion: false,
+            //     error: false,
+            //     loading: true,
+            //     conversationOptions: { conversationId: data.conversationId, parentMessageId: data.id },
+            //     requestOptions: { prompt: message, options: { ...options } },
+            //   },
+            // )
+
+            dataSources.value[index] = {
+              dateTime: new Date().toLocaleString(),
+              text: resText,
+              inversion: false,
+              error: false,
+              loading: true,
+              conversationOptions: null,
+              requestOptions: { prompt: message, options: null },
+            }
 
             if (openLongReply && data.detail.choices[0].finish_reason === 'length') {
               options.parentMessageId = data.id
@@ -365,7 +474,10 @@ async function onRegenerate(index: number) {
           }
         },
       })
-      updateChatSome(+uuid, index, { loading: false })
+      // updateChatSome(+uuid, index, { loading: false })
+      dataSources.value[index] = {
+        ...dataSources.value[index], ...{ loading: false }
+      }
     }
     await fetchChatAPIOnce()
 
@@ -376,31 +488,34 @@ async function onRegenerate(index: number) {
   }
   catch (error: any) {
     if (error.message === 'canceled') {
-      updateChatSome(
-        +uuid,
-        index,
-        {
-          loading: false,
-        },
-      )
+      // updateChatSome(
+      //   +uuid,
+      //   index,
+      //   {
+      //     loading: false,
+      //   },
+      // )
+      dataSources.value[index] = {
+        ...dataSources.value[index], ...{ loading: false }
+      }
       return
     }
 
-    const errorMessage = error?.message ?? t('common.wrong')
+    // const errorMessage = error?.message ?? t('common.wrong')
 
-    updateChat(
-      +uuid,
-      index,
-      {
-        dateTime: new Date().toLocaleString(),
-        text: errorMessage,
-        inversion: false,
-        error: true,
-        loading: false,
-        conversationOptions: null,
-        requestOptions: { prompt: message, options: { ...options } },
-      },
-    )
+    // updateChat(
+    //   +uuid,
+    //   index,
+    //   {
+    //     dateTime: new Date().toLocaleString(),
+    //     text: errorMessage,
+    //     inversion: false,
+    //     error: true,
+    //     loading: false,
+    //     conversationOptions: null,
+    //     requestOptions: { prompt: message, options: { ...options } },
+    //   },
+    // )
   }
   finally {
     loading.value = false
@@ -544,12 +659,19 @@ const footerClass = computed(() => {
   return classes
 })
 
-onMounted(() => {
-  getQuestions()
+onMounted(async () => {
   scrollToBottom()
-  getChatList()
+  if (chatStore.active && uuid) {
+    getChatList(uuid)
+  } else {
+    getQuestions()
+  }
   if (inputRef.value && !isMobile.value)
     inputRef.value?.focus()
+})
+
+watch(() => chatStore.delAll, (oldValue, newValue) => {
+  dataSources.value = []
 })
 
 onUnmounted(() => {
@@ -559,82 +681,86 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-full xxxxx" style="height:calc(100vh - 100px)">
-    <HeaderComponent v-if="isMobile" :using-context="usingContext" @export="handleExport" @handle-clear="handleClear" />
-    <main class="flex-1 overflow-hidden">
-      <div id="scrollRef" ref="scrollRef" class="h-full overflow-hidden overflow-y-auto">
-        <div id="image-wrapper" class="w-full max-w-screen-xl m-auto dark:bg-[#101014]"
-          :class="[isMobile ? 'p-2' : 'p-4']">
-          <template v-if="!dataSources.length">
-            <div class="flex items-center flex-col justify-center mt-20 text-center text-neutral-400">
-              <!-- <SvgIcon icon="ri:bubble-chart-fill" class="mr-2 text-3xl" />
+  <a-spin :loading="pageLoading" style="width:100%;height:calc(100vh - 100px)">
+    <div class="relative flex flex-col w-full h-full xxxxx" style="height:calc(100vh - 100px)">
+      <HeaderComponent v-if="isMobile" :using-context="usingContext" @export="handleExport"
+        @handle-clear="handleClear" />
+      <main class="flex-1 overflow-hidden">
+        <div id="scrollRef" ref="scrollRef" class="h-full overflow-hidden overflow-y-auto">
+          <div id="image-wrapper" class="w-full max-w-screen-xl m-auto dark:bg-[#101014]"
+            :class="[isMobile ? 'p-2' : 'p-4']">
+            <template v-if="!dataSources.length">
+              <div class="flex items-center flex-col justify-center mt-20 text-center text-neutral-400">
+                <!-- <SvgIcon icon="ri:bubble-chart-fill" class="mr-2 text-3xl" />
               <span>{{ t('chat.newChatTitle') }}11111</span> -->
-              <div class="text-lg text-neutral-600">数据熊</div>
-              <div class="mt-2">我可以自动通过全网数据分析了解市场动态</div>
-              <div class="mt-1">为您的公司业务提高投资回报率</div>
-              <div class="mt-2 cursor-pointer underline text-[#18a058]" @click="handleSubmitWithPrompt('你能做什么?')">
-                了解我能做什么？</div>
-            </div>
-          </template>
-          <template v-else>
-            <div>
-              <Message v-for="(item, index) of dataSources" :key="index" :date-time="item.dateTime" :text="item.text"
-                :inversion="item.inversion" :error="item.error" :loading="item.loading"
-                :gusQuestions="item.gusQuestions" @regenerate="onRegenerate(index)" @delete="handleDelete(index)"
-                @onConversation="handleSubmitWithPrompt" />
-              <div class="sticky bottom-0 left-0 flex justify-center">
-                <NButton v-if="loading" type="warning" @click="handleStop">
-                  <template #icon>
-                    <SvgIcon icon="ri:stop-circle-line" />
-                  </template>
-                  {{ t('common.stopResponding') }}
-                </NButton>
+                <div class="text-lg text-neutral-600">数据熊</div>
+                <div class="mt-2">我可以自动通过全网数据分析了解市场动态</div>
+                <div class="mt-1">为您的公司业务提高投资回报率</div>
+                <div class="mt-2 cursor-pointer underline text-[#18a058]" @click="handleSubmitWithPrompt('你能做什么?')">
+                  了解我能做什么？</div>
               </div>
-            </div>
-          </template>
+            </template>
+            <template v-else>
+              <div>
+                <Message v-for="(item, index) of dataSources" :key="index" :date-time="item.dateTime" :text="item.text"
+                  :inversion="item.inversion" :error="item.error" :loading="item.loading"
+                  :gusQuestions="item.gusQuestions" @regenerate="onRegenerate(index)" @delete="handleDelete(index)"
+                  @onConversation="handleSubmitWithPrompt" />
+                <div class="sticky bottom-0 left-0 flex justify-center">
+                  <NButton v-if="loading" type="warning" @click="handleStop">
+                    <template #icon>
+                      <SvgIcon icon="ri:stop-circle-line" />
+                    </template>
+                    {{ t('common.stopResponding') }}
+                  </NButton>
+                </div>
+              </div>
+            </template>
+          </div>
         </div>
-      </div>
-    </main>
-    <footer :class="footerClass">
-      <div class="w-full max-w-screen-xl mb-2 m-auto flex justify-center flex-wrap"
-        v-if="questions && questions.length > 0 && !dataSources.length">
-        <div>你可能想问:</div>
-        <a-tag v-for="(item, index) of questions" class="ml-3 cursor-pointer" :key="index" color="#36ad6a"
-          @click="handleSubmitWithPrompt(item.question)">{{ item.question }}</a-tag>
-      </div>
-      <div class="w-full max-w-screen-xl m-auto">
-        <div class="flex items-center justify-between space-x-2">
-          <HoverButton v-if="!isMobile" @click="handleClear">
-            <span class="text-xl text-[#4f555e] dark:text-white">
-              <SvgIcon icon="ri:delete-bin-line" />
-            </span>
-          </HoverButton>
-          <HoverButton v-if="!isMobile" @click="handleExport">
-            <span class="text-xl text-[#4f555e] dark:text-white">
-              <SvgIcon icon="ri:download-2-line" />
-            </span>
-          </HoverButton>
-          <!-- <HoverButton @click="toggleUsingContext">
+      </main>
+      <footer :class="footerClass">
+        <div class="w-full max-w-screen-xl mb-2 m-auto flex justify-center flex-wrap"
+          v-if="questions && questions.length > 0 && !dataSources.length">
+          <div>你可能想问:</div>
+          <a-tag v-for="(item, index) of questions" class="ml-3 cursor-pointer" :key="index" color="#36ad6a"
+            @click="handleSubmitWithPrompt(item.question)">{{ item.question }}</a-tag>
+        </div>
+        <div class="w-full max-w-screen-xl m-auto">
+          <div class="flex items-center justify-between space-x-2">
+            <!-- <HoverButton v-if="!isMobile" @click="handleClear">
+              <span class="text-xl text-[#4f555e] dark:text-white">
+                <SvgIcon icon="ri:delete-bin-line" />
+              </span>
+            </HoverButton> -->
+            <HoverButton v-if="!isMobile" @click="handleExport">
+              <span class="text-xl text-[#4f555e] dark:text-white">
+                <SvgIcon icon="ri:download-2-line" />
+              </span>
+            </HoverButton>
+            <!-- <HoverButton @click="toggleUsingContext">
             <span class="text-xl" :class="{ 'text-[#4b9e5f]': usingContext, 'text-[#a8071a]': !usingContext }">
               <SvgIcon icon="ri:chat-history-line" />
             </span>
           </HoverButton> -->
-          <NAutoComplete v-model:value="prompt" :options="searchOptions" :render-label="renderOption">
-            <template #default="{ handleInput, handleBlur, handleFocus }">
-              <NInput ref="inputRef" v-model:value="prompt" type="textarea" :placeholder="placeholder"
-                :autosize="{ minRows: 1, maxRows: isMobile ? 4 : 8 }" @input="handleInput" @focus="handleFocus"
-                @blur="handleBlur" @keypress="handleEnter" />
-            </template>
-          </NAutoComplete>
-          <NButton type="primary" :disabled="buttonDisabled" @click="handleSubmit">
-            <template #icon>
-              <span class="dark:text-black">
-                <SvgIcon icon="ri:send-plane-fill" />
-              </span>
-            </template>
-          </NButton>
+            <NAutoComplete v-model:value="prompt" :options="searchOptions" :render-label="renderOption">
+              <template #default="{ handleInput, handleBlur, handleFocus }">
+                <NInput ref="inputRef" v-model:value="prompt" type="textarea" :placeholder="placeholder"
+                  :autosize="{ minRows: 1, maxRows: isMobile ? 4 : 8 }" @input="handleInput" @focus="handleFocus"
+                  @blur="handleBlur" @keypress="handleEnter" />
+              </template>
+            </NAutoComplete>
+            <NButton type="primary" :disabled="buttonDisabled" @click="handleSubmit">
+              <template #icon>
+                <span class="dark:text-black">
+                  <SvgIcon icon="ri:send-plane-fill" />
+                </span>
+              </template>
+            </NButton>
+          </div>
         </div>
-      </div>
-    </footer>
-  </div>
+      </footer>
+
+    </div>
+  </a-spin>
 </template>

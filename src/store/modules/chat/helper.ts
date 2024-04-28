@@ -4,12 +4,16 @@ import { t } from '@/locales'
 const LOCAL_NAME = 'chatStorage'
 
 export function defaultState(): Chat.ChatState {
-  const uuid = 1002
+  const uuid = null
   return {
     active: uuid,
     usingContext: true,
     history: [{ uuid, title: t('chat.newChatTitle'), isEdit: false }],
     chat: [{ uuid, data: [] }],
+    newChat: 1,
+    newChatId: '',
+    delAll: '',
+    newMenu: ''
   }
 }
 
