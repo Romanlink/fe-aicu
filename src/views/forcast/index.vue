@@ -168,7 +168,7 @@ const fetchForecastData = async () => {
     // } else {
     //   forcastData.value = ''
     // }
-    forcastData.value = res || ''
+    forcastData.value = res.forecast || ''
   }).finally(() => {
     loading.value.forcast = false
   })

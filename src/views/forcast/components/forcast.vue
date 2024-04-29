@@ -62,12 +62,31 @@ let option = ref({})
 
 const setOption = () => {
   const xData: string[] = []
-  const seriesData: number[] = []
+  let seriesData1: number[] = []
+  let seriesData2: number[] = []
+  const prices: number[] = []
   props.prices.forEach((item: any) => {
     const { time, price } = item
     xData.push(moment(time).format('YYYY-MM-DD'))
-    seriesData.push(price)
+    if (item.type == 1) {
+      seriesData1.push(price)
+    }
+    
+    seriesData2.push(price)
+
+    if (price) {
+      prices.push(price)
+    }
   })
+
+
+  console.log(seriesData1)
+  console.log(seriesData2)
+
+  prices.sort()
+  const min = prices[0] - 500 < 0 ? 0 : prices[0] - 500
+  const max = prices[prices.length - 1] + 500
+
   option.value = {
     title: {
       text: props.symbol,
@@ -88,13 +107,26 @@ const setOption = () => {
       data: xData
     },
     yAxis: {
-      type: 'value'
+      type: 'value',
+      min,
+      max
     },
     series: [
       {
-        data: seriesData,
+        data: seriesData1,
         type: 'line',
-        smooth: true
+      },
+      {
+        data: seriesData2,
+        type: 'line',
+        itemStyle: {
+          normal: {
+            lineStyle: {
+              width: 1,
+              type: 'dotted'  //'dotted'点型虚线 'solid'实线 'dashed'线性虚线
+            }
+          }
+        },
       }
     ]
   }
