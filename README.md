@@ -31,8 +31,8 @@ pnpm bootstrap
 
 `API` 可用：
 
-- `OPENAI_API_BASE_URL` 设置接口地址，可选，默认：`https://api.openai.com`
-- `OPENAI_API_DISABLE_DEBUG` 设置接口关闭 debug 日志，可选，默认：empty 不关闭
+- `VITE_GLOB_API_URL` 接口地址前缀，默认：`/api/v2`
+- `VITE_APP_API_BASE_URL` 接口地址，默认： `http://156.241.128.91:6200`
 
 ## 打包
 
@@ -60,9 +60,11 @@ http://localhost:1002/
 
 ## 前端网页
 
-1、修改根目录下 `.env` 文件中的 `VITE_GLOB_API_URL` 为你的实际后端接口地址
+1、修改根目录下 `.env` 文件中的 `VITE_GLOB_API_URL` 为你的实际后端接口前缀
 
-2、根目录下运行以下命令，然后将 `dist` 文件夹内的文件复制到你网站服务的根目录下
+2、修改根目录下 `.env` 文件中的 `VITE_APP_API_BASE_URL` 为你的实际后端接口地址
+
+3、根目录下运行以下命令，然后将 `dist` 文件夹内的文件复制到你网站服务的根目录下
 
 ```shell
 pnpm build
