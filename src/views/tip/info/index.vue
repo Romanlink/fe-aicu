@@ -1,7 +1,7 @@
 <template>
   <div class="arco-container">
     <div class="wrapper">
-      <div class="title">欢迎使用 AI PRO</div>
+      <div class="title">欢迎使用数据熊</div>
       <div class="desc">补充一下您的公司名称或者等待管理员将您加入再进入首页吧～</div>
       <a-input :style="{ width: '320px' }" :max-length="50" v-model="orgName" placeholder="请输入公司名称" size="large"
         class="company-input" allow-clear />

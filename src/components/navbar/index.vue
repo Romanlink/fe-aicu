@@ -150,7 +150,7 @@ onMounted(() => {
     Notification.warning({
       title: '当前为试用版',
       content: () => {
-        return h('div', {}, [h('div', '联系商务开通正式版'), h('div', '18633841932'),])
+        return h('div', {}, [h('div', '联系商务开通正式版'), h('div', '18633841933'),])
       },
       position: "bottomLeft",
       duration: 365 * 24 * 60 * 60 * 1000,

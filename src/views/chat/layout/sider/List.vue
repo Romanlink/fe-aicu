@@ -142,8 +142,11 @@ const fetchChatList = async () => {
   if (chatStore.active) {
     chatStore.updateHistory(chatStore.active, { isEdit: false })
   } else if (dataSources.value.length) {
-    console.log(dataSources.value[0].uuid)
     await chatStore.setActive(dataSources.value[0].uuid)
+  }
+
+  if (!dataSources.value.length) {
+    chatStore.setActive(null)
   }
 
   loading.value = false

@@ -54,3 +54,14 @@ export function symbolNewsChartApi(params: any) {
     return post('/symbol/news-chart', params)
 } 
 
+/**
+ * 获取预测分析
+ * @param params 
+ * @returns 
+ */
+export function symbolTimeApi(params: any) {
+    return post('/symbol/last-time', params)
+} 
+
+
+

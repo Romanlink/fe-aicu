@@ -122,19 +122,20 @@ const getChatList = async (uuid: any) => {
  * 获取猜你想问
  * @param question 
  */
-const getQuestions = async (chatId?: string | number) => {
+const getQuestions = async (chatId?: string | number, index?: number) => {
   const data: any = await chatGus({
     chatId
   })
   questions.value = data || []
+  if (index != undefined) {
+    dataSources.value[index].gusQuestions = data || []
+  }
   return new Promise(resolve => {
     resolve(data || [])
   })
 }
 
 async function onConversation(question?: string) {
-
-  // getQuestions()
 
   let message = question || prompt.value
 
@@ -173,7 +174,6 @@ async function onConversation(question?: string) {
   })
 
   scrollToBottom()
-
 
   if (!chatStore.active && !uuid && !chatIdRecord.value) {
     localStorage.newChat = message
@@ -285,9 +285,10 @@ async function onConversation(question?: string) {
         },
       })
       // updateChatSome(+uuid, dataSources.value.length - 1, { loading: false })
-      dataSources.value[dataSources.value.length - 1] = {
-        ...dataSources.value[dataSources.value.length - 1], ...{ loading: false }
-      }
+      // dataSources.value[dataSources.value.length - 1] = {
+      //   ...dataSources.value[dataSources.value.length - 1], ...{ loading: false }
+      // }
+      dataSources.value[dataSources.value.length - 1].loading = false
     }
 
     await fetchChatAPIOnce()
@@ -295,22 +296,20 @@ async function onConversation(question?: string) {
 
     if (!chatStore.active && !uuid && !chatIdRecord.value) {
       chatId = await getCurChatId()
-      // chatStore.setActive(chatId)
       chatIdRecord.value = chatId
-      console.log(chatId)
       chatStore.setNewChatId(chatId)
     }
 
-    loading.value = false
+    // loading.value = false
 
     // updateChatSome(+uuid, dataSources.value.length - 1, { chatId: uuid || '' })
-    const gusQuestions = await getQuestions(uuid || chatIdRecord.value)
+    getQuestions(uuid || chatIdRecord.value, dataSources.value.length - 1)
     // updateChatSomeByChatId(+uuid, uuid, { gusQuestions: gusQuestions || [] })
     // dataSources.value[dataSources.value.length - 1] = {
     //   ...dataSources.value[dataSources.value.length - 1], ...{ gusQuestions: gusQuestions || [] }
     // }
-    dataSources.value[dataSources.value.length - 1].gusQuestions = gusQuestions || []
-    scrollToBottomIfAtBottom()
+    // dataSources.value[dataSources.value.length - 1].gusQuestions = gusQuestions || []
+    // scrollToBottomIfAtBottom()
   }
   catch (error: any) {
     const errorMessage = error?.message ?? t('common.wrong')
@@ -397,7 +396,7 @@ async function onRegenerate(index: number) {
   // )
   dataSources.value[index] = {
     dateTime: new Date().toLocaleString(),
-    text: '',
+    text:  t('chat.thinking'),
     inversion: false,
     error: false,
     loading: true,

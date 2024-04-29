@@ -3,7 +3,7 @@
     <div class="wrapper">
       <div class="title">试用到期：欢迎使用数据熊</div>
       <div class="desc">您的试用已到期，联系商务获取正式版本吧～</div>
-      <div class="contact">商务手机号：18633841932</div>
+      <div class="contact">商务手机号：18633841933</div>
     </div>
   </div>
 </template>

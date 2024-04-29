@@ -2,6 +2,7 @@ import axios from 'axios'
 
 import { Message } from '@arco-design/web-vue';
 import { getStorage, setStorage } from '@/utils/arco-storage'
+import { router } from '@/router/index'
 
 const myAxios = axios.create({
     baseURL: import.meta.env.VITE_GLOB_API_URL,
@@ -58,6 +59,13 @@ myAxios.interceptors.response.use(
         }
     },
     (error) => {
+        if (error.response && error.response.data.code == 'MUC300001') {
+            Message.error(error.response.data.message || error.response.statusText)
+            localStorage.AuthToken = ''
+            localStorage.userInfo = ''
+            router.push('/login')
+            return
+        }
         if (error.request.responseURL.indexOf('/chat/gus') > -1) {
             return
         }

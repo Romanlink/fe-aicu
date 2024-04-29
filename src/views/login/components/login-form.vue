@@ -44,13 +44,13 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Message } from '@arco-design/web-vue';
 import { ValidatedError } from '@arco-design/web-vue/es/form/interface';
 import { useI18n } from 'vue-i18n';
 import { useStorage } from '@vueuse/core';
-import { useUserStore } from '@/store';
+import { useUserStore, useChatStore } from '@/store';
 import useLoading from '@/hooks/loading';
 // import type { LoginData } from '@/api/user';
 import { accountLogin, accountInfo } from '@/api/user'
@@ -64,6 +64,7 @@ const { t } = useI18n();
 const errorMessage = ref('');
 const { loading, setLoading } = useLoading();
 const userStore = useUserStore();
+const chatStore = useChatStore()
 
 const loginConfig = useStorage('login-config', {
   rememberPassword: true,
@@ -185,6 +186,10 @@ const handleLoginSuccess = async (userInfo: any) => {
 const setRememberPassword = (value: boolean) => {
   loginConfig.value.rememberPassword = value;
 };
+
+onMounted(() => {
+  chatStore.setActive(null)
+})
 </script>
 
 <style lang="less" scoped>

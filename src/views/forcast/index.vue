@@ -3,12 +3,13 @@
     <Breadcrumb :items="['预测分析']" />
 
     <Filter :loading="loading.filter" :regions="regions" :symbols="symbols" :forcastDate="forcastDate"
-      @regionChange="regionChange" @symbolChange="symbolChange" @nextPartChange="nextPartChange"  />
+      @regionChange="regionChange" @symbolChange="symbolChange" @nextPartChange="nextPartChange" />
 
     <Forcast :priceLoading="loading.price" :forcastLoading="loading.forcast" :symbol="filter.symbolName"
       :prices="prices" :forcast="forcastData" />
 
-    <Hot :newsLoading="loading.news" :news="news" :chartLoding="loading.newsChart" :chartData="chartData" @pageNoChange="pageNoChange" />
+    <Hot :newsLoading="loading.news" :news="news" :chartLoding="loading.newsChart" :chartData="chartData"
+      @pageNoChange="pageNoChange" />
 
   </div>
 </template>
@@ -16,7 +17,7 @@
 <script lang="ts" setup>
 
 import { ref, onMounted } from 'vue';
-import { regionListApi, symbolListApi, symbolNewsApi, symbolPriceApi, symbolForecastApi, symbolNewsChartApi } from '@/api/forecast'
+import { regionListApi, symbolListApi, symbolNewsApi, symbolPriceApi, symbolForecastApi, symbolNewsChartApi, symbolTimeApi } from '@/api/forecast'
 
 import Filter from './components/filter.vue'
 import Forcast from './components/forcast.vue';
@@ -55,6 +56,7 @@ const chartData = ref<any>({})
 // region change event
 const regionChange = (id: number) => {
   filter.value.regionId = id
+  fetchSymbolTime()
   fetchData()
 }
 
@@ -62,6 +64,7 @@ const regionChange = (id: number) => {
 const symbolChange = (id: number, name: string) => {
   filter.value.symbolId = id
   filter.value.symbolName = name
+  fetchSymbolTime()
   fetchData()
 }
 
@@ -108,6 +111,17 @@ const fetchSymbolList = async () => {
   })
 }
 
+// 获取商品列表
+const fetchSymbolTime = async () => {
+  const { symbolId, regionId } = filter.value
+  return new Promise(resolve => {
+    symbolTimeApi({ id: symbolId, regionId }).then((res: any) => {
+      forcastDate.value = moment(res).format('YYYY-MM-DD HH:mm:ss')
+      resolve(res)
+    })
+  })
+}
+
 // 获取价格详情
 const fetchSymbolPrice = async () => {
   loading.value.price = true
@@ -135,8 +149,25 @@ const fetchSymbolNews = async () => {
 // 获取预测分析
 const fetchForecastData = async () => {
   loading.value.forcast = true
-  forcastDate.value = moment().subtract(1, 'months').format('YYYY-MM-DD HH:mm:ss')
+  // forcastDate.value = moment().subtract(1, 'months').format('YYYY-MM-DD HH:mm:ss')
   symbolForecastApi({ id: filter.value.symbolId, regionId: filter.value.regionId, nextPart: filter.value.nextPart }).then((res: any) => {
+
+    // const { nextPart } = filter.value
+    // if (res.length) {
+    //   switch (nextPart) {
+    //     case 1:
+    //       forcastData.value = res[0].forecast1
+    //       break
+    //     case 2:
+    //       forcastData.value = res[0].forecast2
+    //       break
+    //     case 3:
+    //       forcastData.value = res[0].forecast3
+    //       break
+    //   }
+    // } else {
+    //   forcastData.value = ''
+    // }
     forcastData.value = res || ''
   }).finally(() => {
     loading.value.forcast = false
@@ -161,6 +192,7 @@ onMounted(async () => {
   loading.value.newsChart = true
   await fetchRegionList()
   await fetchSymbolList()
+  await fetchSymbolTime()
   loading.value.filter = false
 
   fetchData()
